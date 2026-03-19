@@ -8,11 +8,17 @@ import { Button } from "@/components/ui/button";
 import { DepositModal } from "./deposit-modal";
 
 function formatUsd(amount: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
 }
 
 function formatDate(ts: number) {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(ts));
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(ts));
 }
 
 const TX_TYPE_LABEL: Record<string, string> = {
@@ -26,8 +32,13 @@ const TX_TYPE_LABEL: Record<string, string> = {
 export default function WalletPage() {
   const [depositOpen, setDepositOpen] = useState(false);
 
-  const { data: balance, isLoading: balanceLoading, refetch } = trpc.wallet.balance.useQuery();
-  const { data: transactions, isLoading: txLoading } = trpc.wallet.transactions.useQuery();
+  const {
+    data: balance,
+    isLoading: balanceLoading,
+    refetch,
+  } = trpc.wallet.balance.useQuery();
+  const { data: transactions, isLoading: txLoading } =
+    trpc.wallet.transactions.useQuery();
 
   return (
     <div>
@@ -77,7 +88,8 @@ export default function WalletPage() {
 
           {!balanceLoading && !balance?.walletAddress && (
             <p className="mt-4 text-sm text-zinc-500">
-              Your embedded wallet is being set up. Sign out and back in if this persists.
+              Your embedded wallet is being set up. Sign out and back in if this
+              persists.
             </p>
           )}
         </CardContent>
@@ -92,7 +104,10 @@ export default function WalletPage() {
           {txLoading ? (
             <div className="px-6 py-8 space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-800" />
+                <div
+                  key={i}
+                  className="h-12 animate-pulse rounded-lg bg-zinc-800"
+                />
               ))}
             </div>
           ) : !transactions?.length ? (
@@ -119,22 +134,33 @@ export default function WalletPage() {
                       {TX_TYPE_LABEL[tx.type] ?? tx.type}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={tx.type === "withdrawal" ? "text-red-400" : "text-emerald-400"}>
-                        {tx.type === "withdrawal" ? "-" : "+"}{formatUsd(tx.amount)}
+                      <span
+                        className={
+                          tx.type === "withdrawal"
+                            ? "text-red-400"
+                            : "text-emerald-400"
+                        }
+                      >
+                        {tx.type === "withdrawal" ? "-" : "+"}
+                        {formatUsd(tx.amount)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        tx.status === "confirmed"
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : tx.status === "failed"
-                          ? "bg-red-500/10 text-red-400"
-                          : "bg-zinc-700 text-zinc-400"
-                      }`}>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          tx.status === "confirmed"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : tx.status === "failed"
+                              ? "bg-red-500/10 text-red-400"
+                              : "bg-zinc-700 text-zinc-400"
+                        }`}
+                      >
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-400">{formatDate(tx.createdAt)}</td>
+                    <td className="px-6 py-4 text-zinc-400">
+                      {tx.createdAt ? formatDate(tx.createdAt) : ""}
+                    </td>
                   </tr>
                 ))}
               </tbody>
