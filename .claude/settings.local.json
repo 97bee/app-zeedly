@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.google.com)",
+      "Bash(pnpm add:*)",
+      "Bash(npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-pnpm --turbopack --no-git)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm config:*)",
+      "Bash(pnpm install:*)",
+      "Bash(find /Users/bee/Desktop/fan-fund/app -type d -not -path */node_modules* -not -path */.git/*)",
+      "Bash(ls -la /Users/bee/Desktop/fan-fund/app/apps/web/src/app/\\\\\\(app\\\\\\)/)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(find /Users/bee/Desktop/fan-fund/app/apps/web -name tailwind.config.* -o -name globals.css)",
+      "Bash(pnpm --filter @zeedly/web add @trpc/server)",
+      "Bash(pnpm --filter @zeedly/web add zustand)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:www.openfort.io)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:openfort.apidocumentation.com)",
+      "WebFetch(domain:better-auth.com)",
+      "WebFetch(domain:docs.openfort.xyz)",
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(pnpm --filter @zeedly/api add @openfort/openfort-node)",
+      "Bash(pnpm --filter @zeedly/web add @openfort/openfort-js)"
+    ]
+  }
+}
