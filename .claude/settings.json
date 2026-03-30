@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @zeedly/web remove @cloudflare/next-on-pages)",
+      "Bash(pnpm --filter @zeedly/web add -D @opennextjs/cloudflare)",
+      "Bash(pnpm --filter @zeedly/web add -D wrangler@^4)"
+    ]
+  }
+}
