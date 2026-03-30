@@ -1,4 +1,0 @@
-{
-  "installCommand": "echo 'skip'",
-  "buildCommand": "pnpm run build"
-}
