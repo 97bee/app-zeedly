@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "cf:build": "next build && cp -rL .next/standalone/apps/web/.next .next/standalone/.next && opennextjs-cloudflare build --skip-build",
+    "cf:build": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare dev",
     "start": "next start",
     "lint": "eslint"
