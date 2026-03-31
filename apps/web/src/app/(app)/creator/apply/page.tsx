@@ -114,7 +114,7 @@ export default function CreatorApplyPage() {
         <CheckCircle className="mb-4 h-16 w-16 text-emerald-400" />
         <h1 className="text-2xl font-bold">Application submitted!</h1>
         <p className="mt-2 text-zinc-400">
-          We'll review your application and get back to you soon.
+          We&apos;ll review your application and get back to you soon.
         </p>
         <Button className="mt-6" onClick={() => router.push("/explore")}>
           Back to Explore
@@ -128,7 +128,7 @@ export default function CreatorApplyPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Apply as a Creator</h1>
         <p className="mt-2 text-zinc-400">
-          Submit your application to launch an IPO on Zeedly. We'll review it within 48 hours.
+          Submit your application to launch an IPO on Zeedly. We&apos;ll review it within 48 hours.
         </p>
       </div>
 
