@@ -8,7 +8,15 @@
       "Bash(pnpm --filter @zeedly/web add -D eslint-config-next@15)",
       "Bash(pnpm --filter @zeedly/web run build)",
       "Bash(pnpm --filter @zeedly/web run cf:build)",
-      "Bash(pnpm --filter @zeedly/web add -D @eslint/eslintrc)"
+      "Bash(pnpm --filter @zeedly/web add -D @eslint/eslintrc)",
+      "Bash(node -e \"console.log\\(require\\(''/Users/bee/Desktop/fan-fund/app/node_modules/next/package.json''\\).version\\)\")",
+      "Bash(next --version)",
+      "Bash(npx next:*)",
+      "Bash(git checkout:*)",
+      "Bash(node -e \"console.log\\(require\\(''./apps/web/node_modules/next/package.json''\\).version\\)\")"
+    ],
+    "additionalDirectories": [
+      "/Users/bee/Desktop/fan-fund/app/apps/web/src/app/(app)/creator/[slug]"
     ]
   }
 }
