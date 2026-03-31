@@ -3,7 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  outputFileTracingRoot: path.join(__dirname, "../../"),
+  outputFileTracingRoot: path.resolve(process.cwd(), "../../"),
 };
 
 export default nextConfig;

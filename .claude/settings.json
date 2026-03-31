@@ -3,7 +3,11 @@
     "allow": [
       "Bash(pnpm --filter @zeedly/web remove @cloudflare/next-on-pages)",
       "Bash(pnpm --filter @zeedly/web add -D @opennextjs/cloudflare)",
-      "Bash(pnpm --filter @zeedly/web add -D wrangler@^4)"
+      "Bash(pnpm --filter @zeedly/web add -D wrangler@^4)",
+      "Bash(pnpm --filter @zeedly/web add next@15 react@18 react-dom@18 @types/react@18 @types/react-dom@18)",
+      "Bash(pnpm --filter @zeedly/web add -D eslint-config-next@15)",
+      "Bash(pnpm --filter @zeedly/web run build)",
+      "Bash(pnpm --filter @zeedly/web run cf:build)"
     ]
   }
 }

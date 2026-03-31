@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -276,8 +276,8 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
 
 /* ── Main Page ─────────────────────────────────────────────────────── */
 
-export default function CreatorPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
+export default function CreatorPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
   const [, setPurchaseSuccess] = useState(false);
 
   const { data: creator, isLoading } = trpc.creator.getBySlug.useQuery({ slug });
