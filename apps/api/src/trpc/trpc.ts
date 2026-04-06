@@ -5,7 +5,6 @@ import { verifyOpenfortToken } from "../openfort/index.js";
 import { UserEntity } from "../db/index.js";
 
 export interface Context {
-  [key: string]: unknown;
   userId: string | null;
   email: string | null;
   role: "user" | "creator" | "admin" | null;
