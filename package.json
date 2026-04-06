@@ -9,7 +9,7 @@
     "dev:web": "turbo dev --filter=@zeedly/web",
     "dev:api": "turbo dev --filter=@zeedly/api"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@10.28.1",
   "devDependencies": {
     "turbo": "^2.8.15"
   }
