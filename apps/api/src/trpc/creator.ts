@@ -20,7 +20,7 @@ export const creatorRouter = router({
    * Submit a creator application. Creates a creator record with status "pending".
    * An admin reviews and approves/rejects it.
    */
-  apply: protectedProcedure
+  submitApplication: protectedProcedure
     .input(
       z.object({
         name: z.string().min(2).max(100),

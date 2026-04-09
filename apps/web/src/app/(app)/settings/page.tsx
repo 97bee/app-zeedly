@@ -3,11 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/auth";
 
 const emailSchema = z.object({ email: z.string().email("Enter a valid email") });
@@ -23,6 +19,24 @@ const passwordSchema = z.object({
 type EmailValues = z.infer<typeof emailSchema>;
 type PasswordValues = z.infer<typeof passwordSchema>;
 
+const inputClass =
+  "w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20 transition-all";
+
+function Section({ title, description, children, delay = 0 }: { title: string; description?: string; children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      className="rounded-2xl border border-zinc-200 bg-white p-6"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay }}
+    >
+      <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+      {description && <p className="mt-1 text-sm text-zinc-400">{description}</p>}
+      <div className="mt-5">{children}</div>
+    </motion.div>
+  );
+}
+
 export default function SettingsPage() {
   const { email } = useAuthStore();
 
@@ -34,122 +48,101 @@ export default function SettingsPage() {
   const passwordForm = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema) });
 
   function onEmailSubmit(data: EmailValues) {
-    // TODO: wire up to tRPC mutation
     console.log("update email", data);
   }
 
   function onPasswordSubmit(data: PasswordValues) {
-    // TODO: wire up to tRPC mutation
     console.log("update password", data);
   }
 
   return (
     <div>
-      <h1 className="mb-8 text-3xl font-bold">Settings</h1>
+      <motion.h1
+        className="mb-8 text-3xl font-bold font-serif text-zinc-900"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        Settings
+      </motion.h1>
 
-      <div className="max-w-2xl space-y-6">
-        {/* Email */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Email address</CardTitle>
-            <CardDescription>Update the email associated with your account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="flex gap-3">
-              <Input
-                type="email"
-                className="flex-1"
-                error={emailForm.formState.errors.email?.message}
-                {...emailForm.register("email")}
-              />
-              <Button type="submit" variant="secondary" disabled={emailForm.formState.isSubmitting}>
-                Update
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      <div className="max-w-2xl space-y-5">
+        <Section title="Email address" description="Update the email associated with your account" delay={0.05}>
+          <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="flex gap-3">
+            <input
+              type="email"
+              className={`${inputClass} flex-1`}
+              {...emailForm.register("email")}
+            />
+            <motion.button
+              type="submit"
+              disabled={emailForm.formState.isSubmitting}
+              className="rounded-xl bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 transition-colors disabled:opacity-50"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Update
+            </motion.button>
+          </form>
+          {emailForm.formState.errors.email && (
+            <p className="mt-1.5 text-xs text-red-500">{emailForm.formState.errors.email.message}</p>
+          )}
+        </Section>
 
-        {/* Password */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Password</CardTitle>
-            <CardDescription>Change your account password</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="currentPassword">Current password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  error={passwordForm.formState.errors.currentPassword?.message}
-                  {...passwordForm.register("currentPassword")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="newPassword">New password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="At least 8 characters"
-                  error={passwordForm.formState.errors.newPassword?.message}
-                  {...passwordForm.register("newPassword")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm new password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  error={passwordForm.formState.errors.confirmPassword?.message}
-                  {...passwordForm.register("confirmPassword")}
-                />
-              </div>
-              <Button type="submit" variant="secondary" disabled={passwordForm.formState.isSubmitting}>
-                Change password
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* 2FA */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Two-factor authentication</CardTitle>
-            <CardDescription>Add an extra layer of security to your account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-zinc-200">Authenticator app</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Use an app like Google Authenticator or 1Password</p>
-              </div>
-              <Switch disabled aria-label="Enable 2FA" />
+        <Section title="Password" description="Change your account password" delay={0.1}>
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-3">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Current password</label>
+              <input type="password" placeholder="••••••••" className={inputClass} {...passwordForm.register("currentPassword")} />
+              {passwordForm.formState.errors.currentPassword && (
+                <p className="mt-1 text-xs text-red-500">{passwordForm.formState.errors.currentPassword.message}</p>
+              )}
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-zinc-600">New password</label>
+              <input type="password" placeholder="At least 8 characters" className={inputClass} {...passwordForm.register("newPassword")} />
+              {passwordForm.formState.errors.newPassword && (
+                <p className="mt-1 text-xs text-red-500">{passwordForm.formState.errors.newPassword.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-zinc-600">Confirm new password</label>
+              <input type="password" placeholder="••••••••" className={inputClass} {...passwordForm.register("confirmPassword")} />
+              {passwordForm.formState.errors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-500">{passwordForm.formState.errors.confirmPassword.message}</p>
+              )}
+            </div>
+            <motion.button
+              type="submit"
+              disabled={passwordForm.formState.isSubmitting}
+              className="rounded-xl bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 transition-colors disabled:opacity-50"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Change password
+            </motion.button>
+          </form>
+        </Section>
 
-        {/* Deposit History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Deposit history</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="py-8 text-center text-zinc-500 text-sm">No deposits yet</div>
-          </CardContent>
-        </Card>
+        <Section title="Two-factor authentication" description="Add an extra layer of security" delay={0.15}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-zinc-700">Authenticator app</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Use an app like Google Authenticator or 1Password</p>
+            </div>
+            <div className="h-6 w-11 rounded-full bg-zinc-200 relative cursor-not-allowed">
+              <div className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform" />
+            </div>
+          </div>
+        </Section>
 
-        {/* Trading History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Trading history</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="py-8 text-center text-zinc-500 text-sm">No trades yet</div>
-          </CardContent>
-        </Card>
+        <Section title="Deposit history" delay={0.2}>
+          <div className="py-6 text-center text-zinc-400 text-sm">No deposits yet</div>
+        </Section>
+
+        <Section title="Trading history" delay={0.25}>
+          <div className="py-6 text-center text-zinc-400 text-sm">No trades yet</div>
+        </Section>
       </div>
     </div>
   );

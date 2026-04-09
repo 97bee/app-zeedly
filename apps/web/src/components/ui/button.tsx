@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/50 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-emerald-600 text-white hover:bg-emerald-500",
-        secondary: "bg-zinc-700 text-white hover:bg-zinc-600",
-        outline: "border border-zinc-700 bg-transparent text-white hover:bg-zinc-800",
-        ghost: "text-zinc-400 hover:bg-zinc-800 hover:text-white",
-        danger: "bg-red-600 text-white hover:bg-red-500",
-        link: "text-emerald-400 underline-offset-4 hover:underline",
+        default: "bg-lime text-zinc-900 hover:bg-lime-dark",
+        secondary: "bg-zinc-100 text-zinc-700 hover:bg-zinc-200",
+        outline: "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50",
+        ghost: "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+        danger: "bg-red-500 text-white hover:bg-red-600",
+        link: "text-zinc-900 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-5 py-2",

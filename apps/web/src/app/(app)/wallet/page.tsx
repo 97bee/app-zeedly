@@ -2,23 +2,17 @@
 
 import { useState } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DepositModal } from "./deposit-modal";
 
 function formatUsd(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 }
 
 function formatDate(ts: number) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(ts));
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(ts));
 }
 
 const TX_TYPE_LABEL: Record<string, string> = {
@@ -32,92 +26,87 @@ const TX_TYPE_LABEL: Record<string, string> = {
 export default function WalletPage() {
   const [depositOpen, setDepositOpen] = useState(false);
 
-  const {
-    data: balance,
-    isLoading: balanceLoading,
-    refetch,
-  } = trpc.wallet.balance.useQuery();
-  const { data: transactions, isLoading: txLoading } =
-    trpc.wallet.transactions.useQuery();
+  const { data: balance, isLoading: balanceLoading, refetch } = trpc.wallet.balance.useQuery();
+  const { data: transactions, isLoading: txLoading } = trpc.wallet.transactions.useQuery();
 
   return (
     <div>
-      <h1 className="mb-8 text-3xl font-bold">Wallet</h1>
+      <motion.h1
+        className="mb-8 text-3xl font-bold font-serif text-zinc-900"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        Wallet
+      </motion.h1>
 
       {/* Balance Card */}
-      <Card className="mb-6">
-        <CardContent className="p-8">
-          <p className="text-sm text-zinc-500">Available Balance</p>
-          {balanceLoading ? (
-            <div className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-zinc-800" />
-          ) : (
-            <p className="mt-1 text-4xl font-bold">
-              {formatUsd(balance?.usdcBalance ?? 0)}
-            </p>
-          )}
+      <motion.div
+        className="mb-6 rounded-2xl border border-zinc-200 bg-white p-8"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+      >
+        <p className="text-sm text-zinc-500">Available Balance</p>
+        {balanceLoading ? (
+          <div className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-zinc-100" />
+        ) : (
+          <p className="mt-1 text-4xl font-bold text-zinc-900">
+            {formatUsd(balance?.usdcBalance ?? 0)}
+          </p>
+        )}
 
-          {balance?.walletAddress && (
-            <p className="mt-2 font-mono text-xs text-zinc-600 truncate max-w-xs">
-              {balance.walletAddress}
-            </p>
-          )}
+        {balance?.walletAddress && (
+          <p className="mt-2 font-mono text-xs text-zinc-400 truncate max-w-xs">
+            {balance.walletAddress}
+          </p>
+        )}
 
-          <div className="mt-6 flex gap-3">
-            <Button
-              onClick={() => setDepositOpen(true)}
-              disabled={!balance?.walletAddress}
-              className="gap-2"
-            >
-              <ArrowDownToLine className="h-4 w-4" />
-              Deposit
-            </Button>
-            <Button variant="outline" disabled className="gap-2">
-              <ArrowUpFromLine className="h-4 w-4" />
-              Withdraw
-              <span className="ml-1 text-xs text-zinc-500">Soon</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => refetch()}
-              title="Refresh balance"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="mt-6 flex gap-3">
+          <Button onClick={() => setDepositOpen(true)} disabled={!balance?.walletAddress} className="gap-2">
+            <ArrowDownToLine className="h-4 w-4" />
+            Deposit
+          </Button>
+          <Button variant="outline" disabled className="gap-2">
+            <ArrowUpFromLine className="h-4 w-4" />
+            Withdraw
+            <span className="ml-1 text-xs text-zinc-400">Soon</span>
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh balance">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
 
-          {!balanceLoading && !balance?.walletAddress && (
-            <p className="mt-4 text-sm text-zinc-500">
-              Your embedded wallet is being set up. Sign out and back in if this
-              persists.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+        {!balanceLoading && !balance?.walletAddress && (
+          <p className="mt-4 text-sm text-zinc-400">
+            Your embedded wallet is being set up. Sign out and back in if this persists.
+          </p>
+        )}
+      </motion.div>
 
       {/* Transaction History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+      <motion.div
+        className="rounded-2xl border border-zinc-200 bg-white"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <div className="border-b border-zinc-100 px-6 py-4">
+          <h2 className="text-lg font-semibold text-zinc-900">Transaction History</h2>
+        </div>
+        <div>
           {txLoading ? (
             <div className="px-6 py-8 space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 animate-pulse rounded-lg bg-zinc-800"
-                />
+                <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100" />
               ))}
             </div>
           ) : !transactions?.length ? (
-            <div className="px-6 py-12 text-center text-sm text-zinc-500">
-              No transactions yet
-            </div>
+            <div className="px-6 py-12 text-center text-sm text-zinc-400">No transactions yet</div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-800 text-left text-xs text-zinc-500">
+                <tr className="border-b border-zinc-100 text-left text-xs text-zinc-400">
                   <th className="px-6 py-3 font-medium">Type</th>
                   <th className="px-6 py-3 font-medium">Amount</th>
                   <th className="px-6 py-3 font-medium">Status</th>
@@ -126,33 +115,24 @@ export default function WalletPage() {
               </thead>
               <tbody>
                 {transactions.map((tx) => (
-                  <tr
-                    key={tx.txId}
-                    className="border-b border-zinc-800 last:border-0 text-sm"
-                  >
-                    <td className="px-6 py-4 font-medium">
+                  <tr key={tx.txId} className="border-b border-zinc-50 last:border-0 text-sm">
+                    <td className="px-6 py-4 font-medium text-zinc-900">
                       {TX_TYPE_LABEL[tx.type] ?? tx.type}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={
-                          tx.type === "withdrawal"
-                            ? "text-red-400"
-                            : "text-emerald-400"
-                        }
-                      >
+                      <span className={tx.type === "withdrawal" ? "text-red-500" : "text-emerald-600"}>
                         {tx.type === "withdrawal" ? "-" : "+"}
                         {formatUsd(tx.amount)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           tx.status === "confirmed"
-                            ? "bg-emerald-500/10 text-emerald-400"
+                            ? "bg-emerald-50 text-emerald-700"
                             : tx.status === "failed"
-                              ? "bg-red-500/10 text-red-400"
-                              : "bg-zinc-700 text-zinc-400"
+                              ? "bg-red-50 text-red-600"
+                              : "bg-zinc-100 text-zinc-500"
                         }`}
                       >
                         {tx.status}
@@ -166,15 +146,15 @@ export default function WalletPage() {
               </tbody>
             </table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
 
       <DepositModal
         open={depositOpen}
         onClose={() => setDepositOpen(false)}
         onSuccess={() => {
           setDepositOpen(false);
-          setTimeout(() => refetch(), 3000); // allow Stripe to process
+          setTimeout(() => refetch(), 3000);
         }}
       />
     </div>

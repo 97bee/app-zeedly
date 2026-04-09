@@ -6,10 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
 import { getOpenfort } from "@/lib/openfort";
 import { useAuthStore } from "@/store/auth";
 
@@ -19,6 +16,9 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const inputClass =
+  "w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 focus:border-[#D4EC2C] focus:outline-none focus:ring-2 focus:ring-[#D4EC2C]/20 transition-all";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,54 +46,75 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-4 text-2xl font-bold text-emerald-400">Zeedly</div>
-        <CardTitle className="text-xl">Welcome back</CardTitle>
-        <CardDescription>Sign in to your account</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block text-2xl font-bold tracking-tight text-zinc-900 font-mono mb-3">
+            zeedly
+          </Link>
+          <h1 className="text-xl font-semibold text-zinc-900 font-[family-name:var(--font-serif)]">Welcome back</h1>
+          <p className="mt-1 text-sm text-zinc-500">Sign in to your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {serverError && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600"
+            >
               {serverError}
-            </div>
+            </motion.div>
           )}
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
+
+          <div>
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zinc-700">Email</label>
+            <input
               id="email"
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
-              error={errors.email?.message}
+              className={inputClass}
               {...register("email")}
             />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input
+
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-zinc-700">Password</label>
+            <input
               id="password"
               type="password"
               placeholder="••••••••"
               autoComplete="current-password"
-              error={errors.password?.message}
+              className={inputClass}
               {...register("password")}
             />
+            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
           </div>
-        </CardContent>
-        <CardFooter className="flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in…" : "Sign in"}
-          </Button>
-          <p className="text-sm text-zinc-400">
+
+          <motion.button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-xl bg-[#D4EC2C] py-3 text-sm font-semibold text-zinc-900 transition-all hover:bg-[#c2d926] disabled:opacity-50"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+          >
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </motion.button>
+
+          <p className="text-center text-sm text-zinc-500">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+            <Link href="/signup" className="font-medium text-zinc-900 hover:text-[#D4EC2C] transition-colors">
               Sign up
             </Link>
           </p>
-        </CardFooter>
-      </form>
-    </Card>
+        </form>
+      </div>
+    </motion.div>
   );
 }
