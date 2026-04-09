@@ -138,24 +138,39 @@ export default function LandingPage() {
   const heroTextY = useTransform(scrollYProgress, [0, 1], [0, 80]);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-zinc-900 font-[family-name:var(--font-geist-sans)]">
+    <div id="top" className="min-h-screen bg-[#FAFAF8] text-zinc-900 font-[family-name:var(--font-geist-sans)] [&_section[id]]:scroll-mt-24">
 
       {/* ─── Navbar ─────────────────────────────────────────────── */}
       <motion.nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
-        <span className="text-xl font-bold tracking-tight text-white font-mono">zeedly</span>
-        <div className="hidden md:flex items-center gap-8 text-sm text-white/80">
-          <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#creators" className="hover:text-white transition-colors">Creators</a>
+        <a
+          href="#top"
+          className="rounded-full bg-zinc-900/60 backdrop-blur-md px-5 py-2.5 text-lg font-bold tracking-tight text-white font-mono ring-1 ring-white/10"
+        >
+          zeedly
+        </a>
+        <div className="hidden md:flex items-center gap-1 rounded-full bg-zinc-900/60 backdrop-blur-md px-2 py-2 ring-1 ring-white/10">
+          {[
+            { label: "How it works", href: "#how-it-works" },
+            { label: "Features", href: "#features" },
+            { label: "Creators", href: "#creators" },
+          ].map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-4 py-1.5 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all"
+            >
+              {item.label}
+            </a>
+          ))}
         </div>
         <Link
           href="/explore"
-          className="flex items-center gap-2 rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-lime-dark hover:scale-105"
+          className="flex items-center gap-2 rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-lime-dark hover:scale-105 ring-1 ring-zinc-900/10"
         >
           Open App
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>
