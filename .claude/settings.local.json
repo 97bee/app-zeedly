@@ -25,7 +25,11 @@
       "WebFetch(domain:unpkg.com)",
       "WebFetch(domain:cdn.jsdelivr.net)",
       "Bash(pnpm --filter @zeedly/api add @openfort/openfort-node)",
-      "Bash(pnpm --filter @zeedly/web add @openfort/openfort-js)"
+      "Bash(pnpm --filter @zeedly/web add @openfort/openfort-js)",
+      "WebFetch(domain:stitch.withgoogle.com)",
+      "Bash(pnpm exec:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(xargs -r kill -9)"
     ]
   }
 }
