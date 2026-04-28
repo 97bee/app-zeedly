@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "IS_LOCAL=true tsx watch src/index.ts",
+    "dev": "IS_LOCAL=true node --env-file=.env --watch --import tsx src/index.ts",
     "build": "tsup src/index.ts --format esm",
     "start": "node dist/index.js"
   },

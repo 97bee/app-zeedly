@@ -13,14 +13,22 @@ export interface Creator {
   slug: string;
   name: string;
   avatarUrl: string | null;
+  artworkUrl: string | null;
+  bio: string | null;
+  background: string | null;
   category: string;
   tags: string[];
+  genre: string | null;
   youtubeUrl: string;
   subscriberCount: number;
   avgViews: number;
+  totalViews: number;
+  uploadFrequency: string | null;
   monthlyRevenue: number;
+  estimatedMonthlyDividend: number;
   valuation: number;
   revenueShareBps: number;
+  analytics: unknown;
   tokenMint: string | null;
   status: "pending" | "approved" | "live" | "rejected";
   createdAt: Date;
@@ -33,6 +41,13 @@ export interface IPO {
   totalSupply: number;
   sold: number;
   raisedUsd: number;
+  raiseTargetUsd: number;
+  maxInvestmentPerAccountUsd: number;
+  valuationAtRaise: number;
+  dividendCadence: string;
+  tokenMintedAt: Date | null;
+  tokenDispersedAt: Date | null;
+  completedAt: Date | null;
   status: "upcoming" | "active" | "closed";
   startsAt: Date;
   endsAt: Date;
@@ -65,6 +80,10 @@ export interface Transaction {
   userId: string;
   type: "deposit" | "withdrawal" | "trade" | "dividend" | "ipo_purchase";
   amount: number;
+  asset: "USDT";
+  fiatAmount: number | null;
+  fiatCurrency: string | null;
+  exchangeRate: number | null;
   referenceId: string | null;
   txSig: string | null;
   status: "pending" | "confirmed" | "failed";
@@ -92,7 +111,25 @@ export interface Holding {
 }
 
 export interface WalletBalance {
-  usdcBalance: number; // Displayed as USD to user
+  usdtBalance: number;
+  usdcBalance: number; // Backward-compatible alias during migration
   holdings: Holding[];
+  offerings: Array<{
+    purchaseId: string;
+    ipoId: string;
+    creatorId: string;
+    creatorName: string;
+    creatorSlug: string;
+    state: "coming_soon" | "live" | "completed";
+    status: "pending" | "confirmed" | "failed";
+    quantity: number;
+    usdtAmount: number;
+    pricePerToken: number;
+    startsAt: Date | null;
+    endsAt: Date | null;
+    kycRequiredBeforeClaim: boolean;
+    claimStatus: string;
+    createdAt: Date;
+  }>;
   totalPortfolioValue: number;
 }

@@ -87,7 +87,7 @@ export default function CreatorApplyPage() {
     <div className="mx-auto max-w-2xl">
       <motion.div className="mb-8" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <h1 className="text-3xl font-bold font-serif text-zinc-900">Apply as a Creator</h1>
-        <p className="mt-2 text-zinc-500">Submit your application to launch an IPO on Zeedly. We&apos;ll review it within 48 hours.</p>
+        <p className="mt-2 text-zinc-500">Submit your application to launch a creator offering on Zeedly. We&apos;ll review it within 48 hours.</p>
       </motion.div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -137,7 +137,7 @@ export default function CreatorApplyPage() {
             <Field label="Avg. views per video" error={errors.avgViews?.message}>
               <input {...register("avgViews")} type="number" min="0" placeholder="500000" className={inputClass} />
             </Field>
-            <Field label="Monthly revenue (USD)" hint="Sponsorships, AdSense, merch, etc." error={errors.monthlyRevenue?.message}>
+            <Field label="Monthly revenue (USDT est.)" hint="Sponsorships, AdSense, merch, etc." error={errors.monthlyRevenue?.message}>
               <input {...register("monthlyRevenue")} type="number" min="0" placeholder="50000" className={inputClass} />
             </Field>
             <Field label="Revenue share to investors (bps)" hint="500 bps = 5% of your monthly revenue distributed as dividends" error={errors.revenueShareBps?.message}>

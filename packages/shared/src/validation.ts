@@ -11,7 +11,7 @@ export const loginSchema = z.object({
 });
 
 export const depositSchema = z.object({
-  amount: z.number().positive().min(1),
+  amountGbp: z.number().positive().min(10).max(10000),
 });
 
 export const tradeSchema = z.object({

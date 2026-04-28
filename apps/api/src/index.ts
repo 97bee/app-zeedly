@@ -1,6 +1,6 @@
 import middy from "@middy/core";
-import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware/middy";
-import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware/middy";
+import { injectLambdaContext } from "@aws-lambda-powertools/logger/middleware";
+import { captureLambdaHandler } from "@aws-lambda-powertools/tracer/middleware";
 import { handle } from "hono/aws-lambda";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -70,10 +70,14 @@ export const handler = middy(handle(app))
   .use(injectLambdaContext(logger, { clearState: true }))
   .use(captureLambdaHandler(tracer));
 
-// Local dev server (IS_LOCAL=true pnpm dev)
-if (env.IS_LOCAL) {
+async function startLocalServer() {
   const { serve } = await import("@hono/node-server");
   serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     logger.info(`Zeedly API running on http://localhost:${info.port}`);
   });
+}
+
+// Local dev server (IS_LOCAL=true pnpm dev)
+if (env.IS_LOCAL) {
+  void startLocalServer();
 }

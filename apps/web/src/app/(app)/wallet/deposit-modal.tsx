@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useMemo, useState } from "react";
+import { CheckCircle2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface Props {
   open: boolean;
@@ -15,163 +11,161 @@ interface Props {
   onSuccess: () => void;
 }
 
-// Inner form — rendered once we have a clientSecret
-function CheckoutForm({ onSuccess, onClose }: { onSuccess: () => void; onClose: () => void }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+function formatGbp(amount: number) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(amount);
+}
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setLoading(true);
-    setError(null);
-
-    const { error: stripeError } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-    });
-
-    if (stripeError) {
-      setError(stripeError.message ?? "Payment failed");
-      setLoading(false);
-    } else {
-      onSuccess();
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      {error && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
-          {error}
-        </div>
-      )}
-      <div className="flex gap-3 pt-2">
-        <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!stripe || loading} className="flex-1">
-          {loading ? "Processing…" : "Pay"}
-        </Button>
-      </div>
-    </form>
-  );
+function formatUsdt(amount: number) {
+  return `${new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)} USDT`;
 }
 
 export function DepositModal({ open, onClose, onSuccess }: Props) {
-  const [amountStr, setAmountStr] = useState("50");
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [amountStr, setAmountStr] = useState("100");
   const [error, setError] = useState<string | null>(null);
+  const [credited, setCredited] = useState<{ amount: number; balance: number } | null>(null);
+  const amountGbp = Number.parseFloat(amountStr) || 0;
+  const deposit = trpc.wallet.deposit.useMutation();
+  const quote = trpc.wallet.quoteDeposit.useQuery(
+    { amountGbp },
+    { enabled: open && amountGbp >= 10 && amountGbp <= 10000 },
+  );
 
-  const depositIntent = trpc.wallet.depositIntent.useMutation();
+  const displayQuote = useMemo(() => {
+    if (quote.data) return quote.data;
+    return {
+      fiatAmount: amountGbp,
+      fiatCurrency: "GBP" as const,
+      asset: "USDT" as const,
+      exchangeRate: 1.25,
+      usdtAmount: Math.round(amountGbp * 125) / 100,
+    };
+  }, [amountGbp, quote.data]);
 
-  async function handleContinue() {
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount < 10) {
-      setError("Minimum deposit is $10");
+  async function handleDeposit() {
+    if (amountGbp < 10) {
+      setError("Minimum deposit is GBP 10");
       return;
     }
+    if (amountGbp > 10000) {
+      setError("Maximum deposit is GBP 10,000");
+      return;
+    }
+
     setError(null);
     try {
-      const { clientSecret: secret } = await depositIntent.mutateAsync({ amountUsd: amount });
-      setClientSecret(secret);
+      const result = await deposit.mutateAsync({ amountGbp });
+      setCredited({ amount: result.usdtAmount, balance: result.balance });
+      onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create payment");
+      setError(err instanceof Error ? err.message : "Deposit failed");
     }
   }
 
   function handleClose() {
-    setClientSecret(null);
-    setAmountStr("50");
+    setAmountStr("100");
     setError(null);
+    setCredited(null);
     onClose();
-  }
-
-  function handleSuccess() {
-    setClientSecret(null);
-    setAmountStr("50");
-    setError(null);
-    onSuccess();
   }
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="relative w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
-          <h2 className="text-lg font-semibold">Deposit funds</h2>
-          <button onClick={handleClose} className="text-zinc-500 hover:text-white transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
+          <h2 className="text-lg font-semibold text-zinc-900">Deposit funds</h2>
+          <button onClick={handleClose} className="text-zinc-400 transition-colors hover:text-zinc-900">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="p-6">
-          {!clientSecret ? (
-            // Step 1 — amount selection
+          {credited ? (
+            <div className="space-y-5 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-zinc-900">{formatUsdt(credited.amount)} credited</p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Available balance: {formatUsdt(credited.balance)}
+                </p>
+              </div>
+              <Button onClick={handleClose} className="w-full">
+                Done
+              </Button>
+            </div>
+          ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm text-zinc-400">Amount (USD)</label>
+                <label className="mb-1.5 block text-sm text-zinc-500">Amount to deposit (GBP)</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">GBP</span>
                   <input
                     type="number"
                     min="10"
                     max="10000"
                     step="1"
                     value={amountStr}
-                    onChange={(e) => setAmountStr(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-700 bg-zinc-900 py-2.5 pl-7 pr-4 text-white placeholder-zinc-600 focus:border-emerald-500 focus:outline-none"
+                    onChange={(event) => setAmountStr(event.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-white py-3 pl-14 pr-4 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
                   />
                 </div>
-                <p className="mt-1 text-xs text-zinc-600">Min $10 · Max $10,000</p>
+                <p className="mt-1 text-xs text-zinc-400">Min GBP 10 / Max GBP 10,000</p>
               </div>
 
-              {/* Quick-select presets */}
-              <div className="flex gap-2">
-                {[25, 50, 100, 250].map((preset) => (
+              <div className="grid grid-cols-4 gap-2">
+                {[50, 100, 250, 500].map((preset) => (
                   <button
                     key={preset}
                     onClick={() => setAmountStr(String(preset))}
-                    className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 py-1.5 text-sm text-zinc-300 hover:border-emerald-500 hover:text-white transition-colors"
+                    className="rounded-xl border border-zinc-200 bg-zinc-50 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-white"
                   >
-                    ${preset}
+                    GBP {preset}
                   </button>
                 ))}
               </div>
 
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-500">You pay</span>
+                  <span className="font-medium text-zinc-900">{formatGbp(displayQuote.fiatAmount)}</span>
+                </div>
+                <div className="mt-2 flex justify-between text-sm">
+                  <span className="text-zinc-500">Converted at</span>
+                  <span className="font-medium text-zinc-900">
+                    1 GBP = {displayQuote.exchangeRate.toFixed(2)} USDT
+                  </span>
+                </div>
+                <div className="mt-3 border-t border-zinc-200 pt-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-zinc-500">Credited balance</span>
+                    <span className="font-semibold text-emerald-600">{formatUsdt(displayQuote.usdtAmount)}</span>
+                  </div>
+                </div>
+              </div>
+
               {error && (
-                <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                   {error}
                 </div>
               )}
 
               <Button
-                onClick={handleContinue}
-                disabled={depositIntent.isPending}
+                onClick={handleDeposit}
+                disabled={deposit.isPending || amountGbp < 10 || amountGbp > 10000}
                 className="w-full"
               >
-                {depositIntent.isPending ? "Loading…" : "Continue to payment"}
+                {deposit.isPending ? "Crediting..." : "Credit USDT balance"}
               </Button>
             </div>
-          ) : (
-            // Step 2 — card payment
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret,
-                appearance: {
-                  theme: "night",
-                  variables: { colorPrimary: "#10b981", colorBackground: "#09090b" },
-                },
-              }}
-            >
-              <CheckoutForm onSuccess={handleSuccess} onClose={handleClose} />
-            </Elements>
           )}
         </div>
       </div>

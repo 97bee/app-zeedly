@@ -2,13 +2,14 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "./trpc.js";
 import { UserEntity, TransactionEntity } from "../db/index.js";
-import { getUsdcBalance, getSolanaWallet } from "../services/solana.js";
-import { stripe } from "../stripe/index.js";
+import { getSolanaWallet } from "../services/solana.js";
+import { getOffchainUsdtBalance, quoteGbpToUsdt } from "../services/offchain-wallet.js";
 
 export const walletRouter = router({
   /**
-   * Get the user's USDC balance (read from Solana on-chain).
-   * Also resolves and caches the wallet address in DynamoDB if not yet stored.
+   * Get the user's off-chain USDT balance.
+   * Solana wallet resolution remains for future token claim flows, but the
+   * investable balance is now the app ledger linked to the user's account.
    */
   balance: protectedProcedure.query(async ({ ctx }) => {
     const userResult = await UserEntity.query.byUserId({ userId: ctx.userId }).go();
@@ -25,9 +26,14 @@ export const walletRouter = router({
     }
 
     const walletAddress = user.solanaPubkey ?? null;
-    const usdcBalance = walletAddress ? await getUsdcBalance(walletAddress) : 0;
+    const usdtBalance = await getOffchainUsdtBalance(ctx.userId);
 
-    return { usdcBalance, walletAddress };
+    return {
+      asset: "USDT" as const,
+      usdtBalance,
+      usdcBalance: usdtBalance,
+      walletAddress,
+    };
   }),
 
   /**
@@ -43,38 +49,41 @@ export const walletRouter = router({
     }),
 
   /**
-   * Create a Stripe PaymentIntent for depositing funds.
-   * Platform receives USD, then transfers USDC to the user's wallet on confirmation.
+   * Quote GBP deposits into USDT.
    */
-  depositIntent: protectedProcedure
-    .input(z.object({ amountUsd: z.number().min(10).max(10000) }))
-    .mutation(async ({ ctx, input }) => {
-      if (!stripe) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Stripe is not configured",
-        });
-      }
+  quoteDeposit: protectedProcedure
+    .input(z.object({ amountGbp: z.number().min(10).max(10000) }))
+    .query(async ({ input }) => {
+      return quoteGbpToUsdt(input.amountGbp);
+    }),
 
+  /**
+   * Credit a GBP deposit into the user's off-chain USDT balance.
+   * This records the ledger movement that later payment/KYC rails can gate.
+   */
+  deposit: protectedProcedure
+    .input(z.object({ amountGbp: z.number().min(10).max(10000) }))
+    .mutation(async ({ ctx, input }) => {
       const { nanoid } = await import("nanoid");
       const txId = nanoid();
+      const quote = quoteGbpToUsdt(input.amountGbp);
 
-      // Record pending transaction
       await TransactionEntity.create({
         txId,
         userId: ctx.userId,
         type: "deposit",
-        amount: input.amountUsd,
-        status: "pending",
+        amount: quote.usdtAmount,
+        asset: quote.asset,
+        fiatAmount: quote.fiatAmount,
+        fiatCurrency: quote.fiatCurrency,
+        exchangeRate: quote.exchangeRate,
+        status: "confirmed",
       }).go();
 
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(input.amountUsd * 100), // cents
-        currency: "usd",
-        metadata: { userId: ctx.userId, txId },
-        automatic_payment_methods: { enabled: true },
-      });
-
-      return { clientSecret: paymentIntent.client_secret! };
+      return {
+        txId,
+        ...quote,
+        balance: await getOffchainUsdtBalance(ctx.userId),
+      };
     }),
 });

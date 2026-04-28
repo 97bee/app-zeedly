@@ -7,7 +7,13 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "dev:web": "turbo dev --filter=@zeedly/web",
-    "dev:api": "turbo dev --filter=@zeedly/api"
+    "dev:api": "turbo dev --filter=@zeedly/api",
+    "infra": "pnpm --filter @zeedly/infra",
+    "infra:bootstrap": "pnpm --filter @zeedly/infra bootstrap",
+    "infra:synth": "pnpm --filter @zeedly/infra synth",
+    "infra:diff": "pnpm --filter @zeedly/infra diff",
+    "infra:deploy": "pnpm --filter @zeedly/infra deploy",
+    "infra:destroy": "pnpm --filter @zeedly/infra destroy"
   },
   "packageManager": "pnpm@10.28.1",
   "devDependencies": {

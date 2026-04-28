@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 
@@ -58,9 +59,12 @@ export default function ExplorePage() {
             >
               <div className="mb-4 flex items-center gap-4">
                 {creator.avatarUrl ? (
-                  <img
+                  <Image
                     src={creator.avatarUrl}
                     alt={creator.name}
+                    width={56}
+                    height={56}
+                    unoptimized
                     className="h-14 w-14 rounded-full object-cover"
                   />
                 ) : (

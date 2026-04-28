@@ -7,8 +7,15 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { DepositModal } from "./deposit-modal";
 
-function formatUsd(amount: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+function formatUsdt(amount: number) {
+  return `${new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Math.abs(amount))} USDT`;
+}
+
+function formatGbp(amount: number) {
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 }
 
 function formatDate(ts: number) {
@@ -20,14 +27,14 @@ const TX_TYPE_LABEL: Record<string, string> = {
   withdrawal: "Withdrawal",
   trade: "Trade",
   dividend: "Dividend",
-  ipo_purchase: "IPO Purchase",
+  ipo_purchase: "Offering Entry",
 };
 
 export default function WalletPage() {
   const [depositOpen, setDepositOpen] = useState(false);
 
   const { data: balance, isLoading: balanceLoading, refetch } = trpc.wallet.balance.useQuery();
-  const { data: transactions, isLoading: txLoading } = trpc.wallet.transactions.useQuery();
+  const { data: transactions, isLoading: txLoading, refetch: refetchTransactions } = trpc.wallet.transactions.useQuery();
 
   return (
     <div>
@@ -47,12 +54,12 @@ export default function WalletPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
       >
-        <p className="text-sm text-zinc-500">Available Balance</p>
+        <p className="text-sm text-zinc-500">Available USDT Balance</p>
         {balanceLoading ? (
           <div className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-zinc-100" />
         ) : (
           <p className="mt-1 text-4xl font-bold text-zinc-900">
-            {formatUsd(balance?.usdcBalance ?? 0)}
+            {formatUsdt(balance?.usdtBalance ?? balance?.usdcBalance ?? 0)}
           </p>
         )}
 
@@ -63,7 +70,7 @@ export default function WalletPage() {
         )}
 
         <div className="mt-6 flex gap-3">
-          <Button onClick={() => setDepositOpen(true)} disabled={!balance?.walletAddress} className="gap-2">
+          <Button onClick={() => setDepositOpen(true)} className="gap-2">
             <ArrowDownToLine className="h-4 w-4" />
             Deposit
           </Button>
@@ -79,7 +86,7 @@ export default function WalletPage() {
 
         {!balanceLoading && !balance?.walletAddress && (
           <p className="mt-4 text-sm text-zinc-400">
-            Your embedded wallet is being set up. Sign out and back in if this persists.
+            Token claims will use an embedded wallet once minting is available. Deposits are held off-chain as USDT.
           </p>
         )}
       </motion.div>
@@ -114,35 +121,49 @@ export default function WalletPage() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((tx) => (
-                  <tr key={tx.txId} className="border-b border-zinc-50 last:border-0 text-sm">
-                    <td className="px-6 py-4 font-medium text-zinc-900">
-                      {TX_TYPE_LABEL[tx.type] ?? tx.type}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={tx.type === "withdrawal" ? "text-red-500" : "text-emerald-600"}>
-                        {tx.type === "withdrawal" ? "-" : "+"}
-                        {formatUsd(tx.amount)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          tx.status === "confirmed"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : tx.status === "failed"
-                              ? "bg-red-50 text-red-600"
-                              : "bg-zinc-100 text-zinc-500"
-                        }`}
-                      >
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-400">
-                      {tx.createdAt ? formatDate(tx.createdAt) : ""}
-                    </td>
-                  </tr>
-                ))}
+                {transactions.map((tx) => {
+                  const displayAmount =
+                    tx.type === "withdrawal" || tx.type === "ipo_purchase"
+                      ? -Math.abs(tx.amount)
+                      : tx.amount;
+
+                  return (
+                    <tr key={tx.txId} className="border-b border-zinc-50 last:border-0 text-sm">
+                      <td className="px-6 py-4 font-medium text-zinc-900">
+                        {TX_TYPE_LABEL[tx.type] ?? tx.type}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <span className={displayAmount < 0 ? "text-red-500" : "text-emerald-600"}>
+                            {displayAmount < 0 ? "-" : "+"}
+                            {formatUsdt(displayAmount)}
+                          </span>
+                          {tx.type === "deposit" && tx.fiatAmount ? (
+                            <p className="text-xs text-zinc-400">
+                              {formatGbp(tx.fiatAmount)} converted to USDT
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            tx.status === "confirmed"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : tx.status === "failed"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-zinc-100 text-zinc-500"
+                          }`}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-zinc-400">
+                        {tx.createdAt ? formatDate(tx.createdAt) : ""}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -153,8 +174,8 @@ export default function WalletPage() {
         open={depositOpen}
         onClose={() => setDepositOpen(false)}
         onSuccess={() => {
-          setDepositOpen(false);
-          setTimeout(() => refetch(), 3000);
+          refetch();
+          refetchTransactions();
         }}
       />
     </div>

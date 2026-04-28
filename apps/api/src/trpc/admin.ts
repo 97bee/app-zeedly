@@ -45,6 +45,8 @@ export const adminRouter = router({
         creatorId: z.string(),
         pricePerToken: z.number().min(0.01),
         totalSupply: z.number().int().min(1000),
+        raiseTargetUsd: z.number().min(1).optional(),
+        maxInvestmentPerAccountUsd: z.number().min(1).optional(),
         startsAt: z.number(), // epoch ms
         endsAt: z.number(),   // epoch ms
       }),
@@ -52,6 +54,35 @@ export const adminRouter = router({
     .mutation(async ({ input }) => {
       const { nanoid } = await import("nanoid");
       const ipoId = nanoid();
+      const maxRaiseBySupply = input.pricePerToken * input.totalSupply;
+      const raiseTargetUsd = input.raiseTargetUsd ?? maxRaiseBySupply;
+      const maxInvestmentPerAccountUsd = input.maxInvestmentPerAccountUsd ?? raiseTargetUsd;
+      const tokensNeededForTarget = raiseTargetUsd / input.pricePerToken;
+
+      if (raiseTargetUsd > maxRaiseBySupply) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Raise target cannot exceed total supply multiplied by token price",
+        });
+      }
+      if (Math.abs(tokensNeededForTarget - Math.round(tokensNeededForTarget)) > 0.000001) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Raise target must equal a whole number of tokens at this price",
+        });
+      }
+      if (maxInvestmentPerAccountUsd < input.pricePerToken) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Max per account must be at least one token",
+        });
+      }
+      if (maxInvestmentPerAccountUsd > raiseTargetUsd) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Max per account cannot exceed the raise target",
+        });
+      }
 
       await Promise.all([
         CreatorEntity.patch({ creatorId: input.creatorId }).set({ status: "live" }).go(),
@@ -60,6 +91,9 @@ export const adminRouter = router({
           creatorId: input.creatorId,
           pricePerToken: input.pricePerToken,
           totalSupply: input.totalSupply,
+          raiseTargetUsd,
+          maxInvestmentPerAccountUsd,
+          valuationAtRaise: input.pricePerToken * input.totalSupply,
           startsAt: input.startsAt,
           endsAt: input.endsAt,
           status: "active",

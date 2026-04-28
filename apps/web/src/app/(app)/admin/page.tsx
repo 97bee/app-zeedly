@@ -16,9 +16,11 @@ const STATUS_COLORS: Record<string, string> = {
 const inputClass =
   "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20 transition-all";
 
-function LaunchIPOForm({ creatorId, onLaunched }: { creatorId: string; onLaunched: () => void }) {
+function LaunchOfferingForm({ creatorId, onLaunched }: { creatorId: string; onLaunched: () => void }) {
   const [price, setPrice] = useState("1.00");
   const [supply, setSupply] = useState("1000000");
+  const [raiseTarget, setRaiseTarget] = useState("1000000");
+  const [maxPerAccount, setMaxPerAccount] = useState("5000");
   const [daysOpen, setDaysOpen] = useState("7");
   const [error, setError] = useState<string | null>(null);
   const launch = trpc.admin.launchIPO.useMutation();
@@ -26,14 +28,32 @@ function LaunchIPOForm({ creatorId, onLaunched }: { creatorId: string; onLaunche
   async function handleLaunch() {
     const priceVal = parseFloat(price);
     const supplyVal = parseInt(supply, 10);
+    const raiseTargetVal = parseFloat(raiseTarget);
+    const maxPerAccountVal = parseFloat(maxPerAccount);
     const days = parseInt(daysOpen, 10);
     if (isNaN(priceVal) || priceVal <= 0) { setError("Invalid price"); return; }
     if (isNaN(supplyVal) || supplyVal < 1000) { setError("Min supply 1,000"); return; }
+    if (isNaN(raiseTargetVal) || raiseTargetVal < priceVal) { setError("Invalid raise target"); return; }
+    if (raiseTargetVal > priceVal * supplyVal) { setError("Target exceeds supply value"); return; }
+    if (Math.abs(raiseTargetVal / priceVal - Math.round(raiseTargetVal / priceVal)) > 0.000001) {
+      setError("Target must equal a whole number of tokens");
+      return;
+    }
+    if (isNaN(maxPerAccountVal) || maxPerAccountVal < priceVal) { setError("Invalid account max"); return; }
+    if (maxPerAccountVal > raiseTargetVal) { setError("Account max cannot exceed target"); return; }
     if (isNaN(days) || days < 1) { setError("Invalid duration"); return; }
     const now = Date.now();
     setError(null);
     try {
-      await launch.mutateAsync({ creatorId, pricePerToken: priceVal, totalSupply: supplyVal, startsAt: now, endsAt: now + days * 86400000 });
+      await launch.mutateAsync({
+        creatorId,
+        pricePerToken: priceVal,
+        totalSupply: supplyVal,
+        raiseTargetUsd: raiseTargetVal,
+        maxInvestmentPerAccountUsd: maxPerAccountVal,
+        startsAt: now,
+        endsAt: now + days * 86400000,
+      });
       onLaunched();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Launch failed");
@@ -47,15 +67,23 @@ function LaunchIPOForm({ creatorId, onLaunched }: { creatorId: string; onLaunche
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
     >
-      <p className="mb-3 text-sm font-medium text-zinc-700">Launch IPO</p>
-      <div className="grid grid-cols-3 gap-3">
+      <p className="mb-3 text-sm font-medium text-zinc-700">Launch Offering</p>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Price per token ($)</label>
+          <label className="mb-1 block text-xs text-zinc-400">Price per token (USDT)</label>
           <input type="number" step="0.01" min="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className={inputClass} />
         </div>
         <div>
           <label className="mb-1 block text-xs text-zinc-400">Total supply</label>
           <input type="number" min="1000" value={supply} onChange={(e) => setSupply(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-zinc-400">Raise target (USDT)</label>
+          <input type="number" min="1" step="1" value={raiseTarget} onChange={(e) => setRaiseTarget(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-zinc-400">Max/account (USDT)</label>
+          <input type="number" min="1" step="1" value={maxPerAccount} onChange={(e) => setMaxPerAccount(e.target.value)} className={inputClass} />
         </div>
         <div>
           <label className="mb-1 block text-xs text-zinc-400">Duration (days)</label>
@@ -65,7 +93,7 @@ function LaunchIPOForm({ creatorId, onLaunched }: { creatorId: string; onLaunche
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
       <Button onClick={handleLaunch} disabled={launch.isPending} className="mt-3 w-full" size="sm">
         <Rocket className="mr-2 h-4 w-4" />
-        {launch.isPending ? "Launching..." : "Launch IPO & Go Live"}
+        {launch.isPending ? "Launching..." : "Launch Offering"}
       </Button>
     </motion.div>
   );
@@ -146,7 +174,7 @@ export default function AdminPage() {
                         )}
                         {creator.status === "approved" && (
                           <Button size="sm" variant="outline" onClick={() => setExpandedId(isExpanded ? null : creator.creatorId)} className="gap-1">
-                            <Rocket className="h-4 w-4" /> Launch IPO
+                            <Rocket className="h-4 w-4" /> Launch Offering
                             {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                           </Button>
                         )}
@@ -175,7 +203,7 @@ export default function AdminPage() {
                             </a>
                           )}
                           {creator.status === "approved" && (
-                            <LaunchIPOForm creatorId={creator.creatorId} onLaunched={() => { setExpandedId(null); refetch(); }} />
+                            <LaunchOfferingForm creatorId={creator.creatorId} onLaunched={() => { setExpandedId(null); refetch(); }} />
                           )}
                         </motion.div>
                       )}

@@ -6,7 +6,10 @@ import {
   TransactionEntity,
   PriceHistoryEntity,
   CreatorEntity,
+  IPOPurchaseEntity,
+  IPOEntity,
 } from "../db/index.js";
+import { getOffchainUsdtBalance } from "../services/offchain-wallet.js";
 // 1% total trading fee (0.5% to creator, 0.5% to platform)
 const TRADING_FEE_BPS = 100;
 
@@ -18,7 +21,39 @@ async function getLatestPrice(creatorId: string): Promise<number | null> {
   const result = await PriceHistoryEntity.query
     .byCreator({ creatorId })
     .go({ order: "desc", limit: 1 });
-  return result.data[0]?.price ?? null;
+  const latestPrice = result.data[0]?.price;
+  if (latestPrice) return latestPrice;
+
+  const ipos = await IPOEntity.query.byCreator({ creatorId }).go();
+  const completedOffering = ipos.data.find((ipo) => ipo.status === "closed");
+  return completedOffering?.pricePerToken ?? null;
+}
+
+async function getConfirmedTokenPosition(userId: string, creatorId: string): Promise<number> {
+  const [trades, purchases] = await Promise.all([
+    TradeEntity.query.byUser({ userId }).go(),
+    IPOPurchaseEntity.query.byUser({ userId }).go(),
+  ]);
+
+  let quantity = trades.data
+    .filter((t) => t.creatorId === creatorId && t.status === "confirmed")
+    .reduce((sum, t) => sum + (t.side === "buy" ? t.quantity : -t.quantity), 0);
+
+  const confirmedPurchases = purchases.data.filter((p) => p.status === "confirmed");
+  if (confirmedPurchases.length === 0) return quantity;
+
+  const ipos = await Promise.all(
+    confirmedPurchases.map((p) => IPOEntity.query.byIpoId({ ipoId: p.ipoId }).go()),
+  );
+
+  for (let i = 0; i < confirmedPurchases.length; i += 1) {
+    const ipo = ipos[i].data[0];
+    if (ipo?.creatorId === creatorId && ipo.status === "closed") {
+      quantity += confirmedPurchases[i].quantity;
+    }
+  }
+
+  return quantity;
 }
 
 export const tradeRouter = router({
@@ -95,15 +130,19 @@ export const tradeRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Trade amount too small" });
       }
 
+      if (input.side === "buy") {
+        const balance = await getOffchainUsdtBalance(ctx.userId);
+        if (balance < grossAmount) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: `Insufficient USDT balance. Available: ${balance.toFixed(2)} USDT`,
+          });
+        }
+      }
+
       // For sells: verify user has enough tokens
       if (input.side === "sell") {
-        const trades = await TradeEntity.query.byUser({ userId: ctx.userId }).go();
-        const confirmedTrades = trades.data.filter(
-          (t) => t.creatorId === input.creatorId && t.status === "confirmed",
-        );
-        const netPosition = confirmedTrades.reduce((sum, t) => {
-          return sum + (t.side === "buy" ? t.quantity : -t.quantity);
-        }, 0);
+        const netPosition = await getConfirmedTokenPosition(ctx.userId, input.creatorId);
 
         if (quantity > netPosition) {
           throw new TRPCError({
@@ -136,6 +175,7 @@ export const tradeRouter = router({
           userId: ctx.userId,
           type: "trade",
           amount: input.side === "buy" ? -grossAmount : netAmount,
+          asset: "USDT",
           referenceId: tradeId,
           status: "confirmed",
         }).go(),

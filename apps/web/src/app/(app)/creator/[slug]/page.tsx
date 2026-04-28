@@ -1,64 +1,197 @@
 "use client";
 
 import { use, useState } from "react";
+import Image from "next/image";
 import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Eye,
-  DollarSign,
-  ExternalLink,
   ArrowRightLeft,
+  Bell,
+  CalendarClock,
+  CheckCircle2,
+  ExternalLink,
+  Eye,
+  LineChart,
+  PlayCircle,
   Rocket,
-  Clock,
+  Tag,
+  TrendingUp,
+  Upload,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 
+type ChartPoint = { label: string; value: number };
+
+type CreatorAnalytics = {
+  subscriberHistory?: ChartPoint[];
+  subscriberProjection?: ChartPoint[];
+  totalViewsHistory?: ChartPoint[];
+};
+
 function formatNumber(n: number): string {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toString();
 }
 
-function formatUSD(amount: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+function formatUsdt(amount: number, maximumFractionDigits = 0): string {
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits }).format(amount)} USDT`;
 }
 
-/* ── IPO Purchase Form ─────────────────────────────────────────────── */
+function formatDate(ts: number): string {
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(ts));
+}
 
-interface IPOPurchaseFormProps {
+function fallbackSeries(current: number, labels: string[], startMultiplier: number, endMultiplier = 1) {
+  const safeCurrent = Math.max(current, 1);
+  return labels.map((label, index) => {
+    const progress = labels.length === 1 ? 1 : index / (labels.length - 1);
+    const multiplier = startMultiplier + (endMultiplier - startMultiplier) * progress;
+    return { label, value: Math.round(safeCurrent * multiplier) };
+  });
+}
+
+function getAnalytics(value: unknown): CreatorAnalytics {
+  if (!value || typeof value !== "object") return {};
+  return value as CreatorAnalytics;
+}
+
+function MiniLineChart({
+  data,
+  tone = "emerald",
+  valueFormatter = formatNumber,
+}: {
+  data: ChartPoint[];
+  tone?: "emerald" | "zinc" | "lime";
+  valueFormatter?: (value: number) => string;
+}) {
+  if (data.length < 2) return null;
+
+  const min = Math.min(...data.map((point) => point.value));
+  const max = Math.max(...data.map((point) => point.value));
+  const range = max - min || 1;
+  const width = 640;
+  const height = 180;
+  const padX = 18;
+  const padY = 18;
+  const color = tone === "lime" ? "#a3c614" : tone === "zinc" ? "#71717a" : "#059669";
+
+  const points = data.map((point, index) => {
+    const x = padX + (index / (data.length - 1)) * (width - padX * 2);
+    const y = height - padY - ((point.value - min) / range) * (height - padY * 2);
+    return { ...point, x, y };
+  });
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full" preserveAspectRatio="none">
+        <path d={path} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((point) => (
+          <circle key={`${point.label}-${point.value}`} cx={point.x} cy={point.y} r="4" fill={color} />
+        ))}
+      </svg>
+      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-zinc-400">
+        <span>{data[0].label}</span>
+        <span className="text-center text-zinc-500">{valueFormatter(data[Math.floor(data.length / 2)].value)}</span>
+        <span className="text-right">{data[data.length - 1].label}</span>
+      </div>
+    </div>
+  );
+}
+
+function ChartPanel({
+  title,
+  icon: Icon,
+  data,
+  tone,
+  valueFormatter,
+}: {
+  title: string;
+  icon: LucideIcon;
+  data: ChartPoint[];
+  tone?: "emerald" | "zinc" | "lime";
+  valueFormatter?: (value: number) => string;
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+          <Icon className="h-4 w-4 text-zinc-400" />
+          {title}
+        </h3>
+        <span className="text-xs text-zinc-400">{formatNumber(data[data.length - 1]?.value ?? 0)}</span>
+      </div>
+      <MiniLineChart data={data} tone={tone} valueFormatter={valueFormatter} />
+    </div>
+  );
+}
+
+function OfferingInvestForm({
+  ipoId,
+  pricePerToken,
+  remaining,
+  remainingRaiseUsd,
+  maxInvestmentPerAccountUsd,
+  onSuccess,
+}: {
   ipoId: string;
   pricePerToken: number;
   remaining: number;
+  remainingRaiseUsd: number;
+  maxInvestmentPerAccountUsd: number;
   onSuccess: () => void;
-}
-
-function IPOPurchaseForm({ ipoId, pricePerToken, remaining, onSuccess }: IPOPurchaseFormProps) {
-  const [quantity, setQuantity] = useState("100");
+}) {
+  const [amountStr, setAmountStr] = useState("100");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const purchase = trpc.ipo.purchase.useMutation();
-  const qty = parseInt(quantity, 10) || 0;
-  const total = qty * pricePerToken;
+  const { data: balance } = trpc.wallet.balance.useQuery();
+  const amount = Number.parseFloat(amountStr) || 0;
+  const quantity = Math.floor(amount / pricePerToken);
+  const committed = quantity * pricePerToken;
+  const available = balance?.usdtBalance ?? balance?.usdcBalance ?? 0;
 
-  async function handleBuy() {
-    if (qty < 1) { setError("Enter a valid quantity"); return; }
+  async function handleInvest() {
+    if (quantity < 1) {
+      setError("Enter enough USDT to buy at least 1 token");
+      return;
+    }
+    if (quantity > remaining) {
+      setError("That is more than the remaining allocation");
+      return;
+    }
+    if (committed > remainingRaiseUsd) {
+      setError("That is more than the remaining raise target");
+      return;
+    }
+    if (committed > maxInvestmentPerAccountUsd) {
+      setError(`Max investment for this offering is ${formatUsdt(maxInvestmentPerAccountUsd, 2)}`);
+      return;
+    }
+    if (committed > available) {
+      setError("Insufficient USDT balance");
+      return;
+    }
+
     setError(null);
     try {
-      await purchase.mutateAsync({ ipoId, quantity: qty });
+      await purchase.mutateAsync({ ipoId, quantity });
       setSuccess(true);
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Purchase failed");
+      setError(err instanceof Error ? err.message : "Investment failed");
     }
   }
 
   if (success) {
     return (
-      <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-4 py-6 text-center">
-        <p className="font-semibold text-emerald-400">Purchase submitted!</p>
-        <p className="mt-1 text-sm text-zinc-400">Tokens credited after the IPO closes.</p>
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-center">
+        <CheckCircle2 className="mx-auto h-6 w-6 text-emerald-600" />
+        <p className="mt-2 font-semibold text-emerald-700">Participation confirmed</p>
+        <p className="mt-1 text-sm text-zinc-500">KYC is required before claiming tokens after completion.</p>
       </div>
     );
   }
@@ -66,66 +199,73 @@ function IPOPurchaseForm({ ipoId, pricePerToken, remaining, onSuccess }: IPOPurc
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1 block text-sm text-zinc-500">Quantity (tokens)</label>
+        <label className="mb-1.5 block text-sm text-zinc-500">Commit from USDT balance</label>
         <input
           type="number"
-          min="1"
-          max={remaining}
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-lg text-white placeholder-zinc-600 focus:border-emerald-500 focus:outline-none"
+          min={pricePerToken}
+          max={Math.min(remaining * pricePerToken, remainingRaiseUsd, maxInvestmentPerAccountUsd)}
+          value={amountStr}
+          onChange={(event) => setAmountStr(event.target.value)}
+          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
         />
-        <p className="mt-1 text-xs text-zinc-600">{remaining.toLocaleString()} remaining</p>
+        <p className="mt-1 text-xs text-zinc-400">
+          Available: {formatUsdt(available, 2)} / Left: {formatUsdt(remainingRaiseUsd, 2)} / Max: {formatUsdt(maxInvestmentPerAccountUsd, 2)}
+        </p>
       </div>
-      <div className="rounded-lg bg-zinc-800 px-4 py-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-zinc-400">Total cost</span>
-          <span className="font-semibold">{formatUSD(total)}</span>
+
+      <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm">
+        <div className="flex justify-between">
+          <span className="text-zinc-500">Estimated tokens</span>
+          <span className="font-medium text-zinc-900">{quantity.toLocaleString()}</span>
+        </div>
+        <div className="mt-2 flex justify-between">
+          <span className="text-zinc-500">USDT committed</span>
+          <span className="font-medium text-zinc-900">{formatUsdt(committed, 2)}</span>
         </div>
       </div>
-      {error && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+
+      {error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
-      )}
-      <Button onClick={handleBuy} disabled={purchase.isPending || qty < 1} className="w-full">
-        {purchase.isPending ? "Processing…" : `Buy ${qty.toLocaleString()} tokens`}
+      ) : null}
+
+      <Button onClick={handleInvest} disabled={purchase.isPending || quantity < 1} className="w-full">
+        {purchase.isPending ? "Processing..." : "Invest"}
       </Button>
-      <p className="text-center text-xs text-zinc-600">Tokens credited when the IPO closes</p>
     </div>
   );
 }
 
-/* ── Trade Form (Secondary Market) ─────────────────────────────────── */
-
-interface TradeFormProps {
+function TradeForm({
+  creatorId,
+  creatorName,
+  currentPrice,
+  onTraded,
+}: {
   creatorId: string;
   creatorName: string;
   currentPrice: number;
   onTraded: () => void;
-}
-
-function TradeForm({ creatorId, creatorName, currentPrice, onTraded }: TradeFormProps) {
+}) {
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{
-    side: string;
-    quantity: number;
-    price: number;
-    fee: number;
-  } | null>(null);
-
+  const [result, setResult] = useState<{ side: string; quantity: number; price: number; fee: number } | null>(null);
   const trade = trpc.trade.execute.useMutation();
-  const usdAmount = parseFloat(amount) || 0;
-  const estQuantity = currentPrice > 0 ? usdAmount * 0.99 / currentPrice : 0; // net of 1% fee
+  const usdtAmount = Number.parseFloat(amount) || 0;
+  const estQuantity = currentPrice > 0 ? (usdtAmount * 0.99) / currentPrice : 0;
 
   async function handleTrade() {
-    if (usdAmount < 0.01) { setError("Enter a valid amount"); return; }
+    if (usdtAmount < 0.01) {
+      setError("Enter a valid amount");
+      return;
+    }
+
     setError(null);
     try {
-      const res = await trade.mutateAsync({ creatorId, side, usdAmount });
-      setResult(res);
+      const response = await trade.mutateAsync({ creatorId, side, usdAmount: usdtAmount });
+      setResult(response);
       onTraded();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Trade failed");
@@ -135,17 +275,20 @@ function TradeForm({ creatorId, creatorName, currentPrice, onTraded }: TradeForm
   if (result) {
     return (
       <div className="space-y-3">
-        <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-4 py-4 text-center">
-          <p className="font-semibold text-emerald-400">
-            {result.side === "buy" ? "Bought" : "Sold"} {result.quantity.toFixed(6)} tokens
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-center">
+          <p className="font-semibold text-emerald-700">
+            {result.side === "buy" ? "Bought" : "Sold"} {result.quantity.toFixed(4)} tokens
           </p>
-          <p className="mt-1 text-sm text-zinc-400">
-            @ {formatUSD(result.price)} · Fee: {formatUSD(result.fee)}
+          <p className="mt-1 text-sm text-zinc-500">
+            At {formatUsdt(result.price, 2)} / Fee {formatUsdt(result.fee, 2)}
           </p>
         </div>
         <Button
           variant="outline"
-          onClick={() => { setResult(null); setAmount(""); }}
+          onClick={() => {
+            setResult(null);
+            setAmount("");
+          }}
           className="w-full"
         >
           New trade
@@ -156,116 +299,105 @@ function TradeForm({ creatorId, creatorName, currentPrice, onTraded }: TradeForm
 
   return (
     <div className="space-y-4">
-      {/* Buy/Sell tabs */}
-      <div className="flex rounded-lg border border-zinc-700 p-1">
-        {(["buy", "sell"] as const).map((s) => (
+      <div className="grid grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+        {(["buy", "sell"] as const).map((option) => (
           <button
-            key={s}
-            onClick={() => { setSide(s); setError(null); }}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-              side === s
-                ? s === "buy"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-red-600 text-white"
-                : "text-zinc-400 hover:text-white"
+            key={option}
+            onClick={() => {
+              setSide(option);
+              setError(null);
+            }}
+            className={`rounded-lg py-2 text-sm font-medium transition-colors ${
+              side === option ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-900"
             }`}
           >
-            {s === "buy" ? "Buy" : "Sell"}
+            {option === "buy" ? "Buy" : "Sell"}
           </button>
         ))}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-zinc-500">Amount (USD)</label>
+        <label className="mb-1.5 block text-sm text-zinc-500">Amount (USDT)</label>
         <input
           type="number"
           min="0.01"
           step="0.01"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(event) => setAmount(event.target.value)}
           placeholder="0.00"
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-lg text-white placeholder-zinc-600 focus:border-emerald-500 focus:outline-none"
+          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
         />
       </div>
 
-      {usdAmount > 0 && (
-        <div className="rounded-lg bg-zinc-800 px-4 py-3 space-y-1">
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-400">Est. tokens</span>
-            <span className="font-medium">~{estQuantity.toFixed(4)} {creatorName}</span>
+      {usdtAmount > 0 ? (
+        <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-zinc-500">Estimated tokens</span>
+            <span className="font-medium text-zinc-900">
+              {estQuantity.toFixed(4)} {creatorName}
+            </span>
           </div>
-          <div className="flex justify-between text-xs text-zinc-600">
-            <span>Fee (1%)</span>
-            <span>{formatUSD(usdAmount * 0.01)}</span>
+          <div className="mt-2 flex justify-between text-xs text-zinc-400">
+            <span>Trading fee</span>
+            <span>{formatUsdt(usdtAmount * 0.01, 2)}</span>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {error && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+      {error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
-      )}
+      ) : null}
 
       <Button
         onClick={handleTrade}
-        disabled={trade.isPending || usdAmount < 0.01}
-        className={`w-full ${side === "sell" ? "bg-red-600 hover:bg-red-500" : ""}`}
+        disabled={trade.isPending || usdtAmount < 0.01}
+        variant={side === "sell" ? "danger" : "default"}
+        className="w-full"
       >
-        {trade.isPending
-          ? "Processing…"
-          : `${side === "buy" ? "Buy" : "Sell"} ${creatorName}`}
+        {trade.isPending ? "Processing..." : `${side === "buy" ? "Buy" : "Sell"} tokens`}
       </Button>
-
-      <p className="text-center text-xs text-zinc-600">
-        1% trading fee (0.5% to creator, 0.5% to platform)
-      </p>
     </div>
   );
 }
 
-/* ── Recent Trades ─────────────────────────────────────────────────── */
-
 function RecentTrades({ creatorId }: { creatorId: string }) {
   const { data: trades, isLoading } = trpc.trade.creatorTrades.useQuery(
-    { creatorId, limit: 10 },
+    { creatorId, limit: 8 },
     { refetchInterval: 15_000 },
   );
 
-  if (isLoading) return <div className="h-32 animate-pulse rounded-xl bg-zinc-900" />;
+  if (isLoading) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />;
   if (!trades?.length) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-6 py-8 text-center text-zinc-500 text-sm">
-        No trades yet
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-6 py-10 text-center text-sm text-zinc-400">
+        No token trades yet.
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900">
-      <div className="border-b border-zinc-800 px-6 py-3">
-        <h3 className="text-sm font-semibold">Recent Trades</h3>
+    <div className="rounded-2xl border border-zinc-200 bg-white">
+      <div className="border-b border-zinc-100 px-6 py-4">
+        <h3 className="text-lg font-semibold text-zinc-900">Recent Trades</h3>
       </div>
-      <div className="divide-y divide-zinc-800">
-        {trades.map((t) => (
-          <div key={t.tradeId} className="flex items-center justify-between px-6 py-3">
+      <div className="divide-y divide-zinc-50">
+        {trades.map((trade) => (
+          <div key={trade.tradeId} className="flex items-center justify-between px-6 py-3">
             <div className="flex items-center gap-3">
               <span
-                className={`rounded px-2 py-0.5 text-xs font-medium ${
-                  t.side === "buy"
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : "bg-red-500/10 text-red-400"
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  trade.side === "buy" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
                 }`}
               >
-                {t.side.toUpperCase()}
+                {trade.side.toUpperCase()}
               </span>
-              <span className="text-sm">{t.quantity.toFixed(4)} tokens</span>
+              <span className="text-sm text-zinc-700">{trade.quantity.toFixed(4)} tokens</span>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium">{formatUSD(t.usdAmount)}</p>
-              <p className="text-xs text-zinc-600">
-                @ {formatUSD(t.price)}
-              </p>
+              <p className="text-sm font-medium text-zinc-900">{formatUsdt(trade.usdAmount, 2)}</p>
+              <p className="text-xs text-zinc-400">At {formatUsdt(trade.price, 2)}</p>
             </div>
           </div>
         ))}
@@ -274,12 +406,9 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
   );
 }
 
-/* ── Main Page ─────────────────────────────────────────────────────── */
-
 export default function CreatorPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const [, setPurchaseSuccess] = useState(false);
-
+  const [notified, setNotified] = useState(false);
   const { data: creator, isLoading } = trpc.creator.getBySlug.useQuery({ slug });
   const { data: ipos, refetch: refetchIpos } = trpc.ipo.getByCreator.useQuery(
     { creatorId: creator?.creatorId ?? "" },
@@ -289,18 +418,15 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
     { creatorId: creator?.creatorId ?? "" },
     { enabled: !!creator?.creatorId, refetchInterval: 10_000 },
   );
-  const { data: priceHistory } = trpc.trade.priceHistory.useQuery(
-    { creatorId: creator?.creatorId ?? "", limit: 50 },
-    { enabled: !!creator?.creatorId },
-  );
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-24 animate-pulse rounded-xl bg-zinc-900" />
-        <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2 h-80 animate-pulse rounded-xl bg-zinc-900" />
-          <div className="h-80 animate-pulse rounded-xl bg-zinc-900" />
+        <div className="h-80 animate-pulse rounded-2xl bg-zinc-100" />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="h-56 animate-pulse rounded-2xl bg-zinc-100" />
+          <div className="h-56 animate-pulse rounded-2xl bg-zinc-100" />
+          <div className="h-56 animate-pulse rounded-2xl bg-zinc-100" />
         </div>
       </div>
     );
@@ -308,308 +434,291 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
 
   if (!creator) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-6 py-16 text-center text-zinc-500">
+      <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center text-zinc-500">
         Creator not found.
       </div>
     );
   }
 
-  const activeIpo = ipos?.find((i) => i.status === "active");
-  const upcomingIpo = ipos?.find((i) => i.status === "upcoming");
-  const currentIpo = activeIpo ?? upcomingIpo;
-  const isIPOPhase = !!currentIpo;
-  const currentPrice = priceData?.price ?? null;
-
-  const ipoSold = activeIpo?.sold ?? 0;
-  const percentSold = activeIpo
-    ? Math.round((ipoSold / activeIpo.totalSupply) * 100)
+  const activeOffering = ipos?.find((ipo) => ipo.status === "active");
+  const upcomingOffering = ipos?.find((ipo) => ipo.status === "upcoming");
+  const completedOffering = ipos?.find((ipo) => ipo.status === "closed");
+  const primaryOffering = activeOffering ?? upcomingOffering ?? completedOffering;
+  const currentPrice = priceData?.price ?? completedOffering?.pricePerToken ?? null;
+  const analytics = getAnalytics(creator.analytics);
+  const totalViews = creator.totalViews || Math.max((creator.avgViews ?? 0) * 240, (creator.subscriberCount ?? 0) * 20);
+  const estimatedMonthlyDividend =
+    creator.estimatedMonthlyDividend || (creator.monthlyRevenue ?? 0) * ((creator.revenueShareBps ?? 0) / 10000);
+  const raiseTarget = primaryOffering
+    ? primaryOffering.raiseTargetUsd || primaryOffering.totalSupply * primaryOffering.pricePerToken
+    : creator.valuation ?? 0;
+  const accountMax = primaryOffering
+    ? primaryOffering.maxInvestmentPerAccountUsd || raiseTarget
     : 0;
-
-  // Simple 24h price change from history
-  const priceChange24h = (() => {
-    if (!priceHistory || priceHistory.length < 2 || !currentPrice) return null;
-    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const oldest = priceHistory.find((p) => (p.timestamp ?? 0) >= dayAgo) ?? priceHistory[0];
-    if (!oldest || oldest.price === 0) return null;
-    return ((currentPrice - oldest.price) / oldest.price) * 100;
-  })();
+  const raised = primaryOffering?.raisedUsd ?? 0;
+  const percentRaised = raiseTarget > 0 ? Math.min(100, Math.round((raised / raiseTarget) * 100)) : 0;
+  const valuation = primaryOffering?.valuationAtRaise || creator.valuation || raiseTarget;
+  const uploadFrequency = creator.uploadFrequency || "2-3 uploads per month";
+  const genre = creator.genre || creator.category;
+  const subscriberHistory = analytics.subscriberHistory ?? fallbackSeries(creator.subscriberCount ?? 0, ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"], 0.82);
+  const subscriberProjection = analytics.subscriberProjection ?? fallbackSeries(creator.subscriberCount ?? 0, ["Now", "+3m", "+6m", "+9m", "+12m"], 1, 1.18);
+  const totalViewsHistory = analytics.totalViewsHistory ?? fallbackSeries(totalViews, ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"], 0.74);
+  const artworkUrl = creator.artworkUrl || creator.avatarUrl;
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div className="flex items-center gap-5">
-          {creator.avatarUrl ? (
-            <img
-              src={creator.avatarUrl}
-              alt={creator.name}
-              className="h-20 w-20 rounded-full object-cover"
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="relative h-56 bg-zinc-900">
+          {artworkUrl ? (
+            <Image
+              src={artworkUrl}
+              alt={`${creator.name} artwork`}
+              fill
+              unoptimized
+              sizes="(min-width: 1280px) 960px, 100vw"
+              className="object-cover opacity-85"
             />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-700 text-3xl font-bold">
-              {creator.name[0]}
-            </div>
+            <div className="h-full w-full bg-[linear-gradient(135deg,#18181b,#365314_55%,#d4ec2c)]" />
           )}
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">{creator.name}</h1>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  activeIpo
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : upcomingIpo
-                    ? "bg-yellow-500/10 text-yellow-400"
-                    : "bg-zinc-700 text-zinc-400"
-                }`}
-              >
-                {activeIpo ? "IPO Live" : upcomingIpo ? "IPO Soon" : "Live"}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+        </div>
+        <div className="px-6 pb-6">
+          <div className="-mt-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="flex items-end gap-4">
+              {creator.avatarUrl ? (
+                <Image
+                  src={creator.avatarUrl}
+                  alt={creator.name}
+                  width={96}
+                  height={96}
+                  unoptimized
+                  className="h-24 w-24 rounded-2xl border-4 border-white object-cover shadow-sm"
+                />
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-lime text-3xl font-bold text-zinc-900 shadow-sm">
+                  {creator.name[0]}
+                </div>
+              )}
+              <div className="pb-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-3xl font-bold font-serif text-zinc-900">{creator.name}</h1>
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                    {primaryOffering?.status === "active"
+                      ? "Offering Live"
+                      : primaryOffering?.status === "closed"
+                        ? "Token Live"
+                        : "Coming Soon"}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-lime/25 px-3 py-1 text-xs font-medium text-zinc-800">
+                    <Tag className="h-3 w-3" />
+                    {genre}
+                  </span>
+                  {creator.tags?.slice(0, 3).map((tag) => (
+                    <span key={tag} className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-500">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {creator.youtubeUrl ? (
+              <Button asChild variant="outline">
+                <a href={creator.youtubeUrl} target="_blank" rel="noopener noreferrer">
+                  <PlayCircle className="h-4 w-4" />
+                  Go to Channel
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
+        <main className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[
+              { icon: Users, label: "Subscribers", value: formatNumber(creator.subscriberCount ?? 0) },
+              { icon: Eye, label: "Total Views", value: formatNumber(totalViews) },
+              { icon: Upload, label: "Upload Frequency", value: uploadFrequency },
+              { icon: Tag, label: "Genre", value: genre },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="rounded-2xl border border-zinc-200 bg-white p-5">
+                <div className="mb-2 flex items-center gap-2 text-zinc-400">
+                  <Icon className="h-4 w-4" />
+                  <span className="text-xs">{label}</span>
+                </div>
+                <p className="text-lg font-semibold text-zinc-900">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            <ChartPanel title="Subscriber Growth" icon={TrendingUp} data={subscriberHistory} tone="emerald" />
+            <ChartPanel title="Future Projections" icon={LineChart} data={subscriberProjection} tone="lime" />
+            <ChartPanel title="Total Views" icon={Eye} data={totalViewsHistory} tone="zinc" />
+          </div>
+
+          <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-zinc-900">Channel Bio</h2>
+              <p className="mt-3 leading-7 text-zinc-600">
+                {creator.bio ||
+                  `${creator.name} is a ${genre.toLowerCase()} creator with a large recurring audience and a channel built around repeatable, high-retention formats.`}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-zinc-900">Background</h2>
+              <p className="mt-3 leading-7 text-zinc-600">
+                {creator.background ||
+                  "Zeedly tracks audience growth, view velocity, upload cadence, and expected revenue share to present the creator as an investable offering."}
+              </p>
+            </div>
+          </section>
+
+          {completedOffering ? <RecentTrades creatorId={creator.creatorId} /> : null}
+        </main>
+
+        <aside className="space-y-5">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-zinc-900">
+                {primaryOffering?.status === "closed" ? "Token" : "Offering"}
+              </h2>
+              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                {primaryOffering?.dividendCadence ?? "Quarterly"} dividends
               </span>
             </div>
-            <p className="mt-1 text-zinc-500">{creator.category}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {creator.tags?.map((tag) => (
-                <span key={tag} className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-        {creator.youtubeUrl && (
-          <a
-            href={creator.youtubeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-800"
-          >
-            YouTube <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-      </div>
 
-      {/* Main content */}
-      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {isIPOPhase ? (
-            /* IPO progress card */
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-              <div className="mb-1 flex items-center gap-2">
-                <Rocket className="h-5 w-5 text-emerald-400" />
-                <h3 className="text-lg font-semibold">
-                  {activeIpo ? "IPO In Progress" : "Upcoming IPO"}
-                </h3>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                <div>
-                  <p className="text-xs text-zinc-500">Price per Token</p>
-                  <p className="text-2xl font-bold">${currentIpo!.pricePerToken.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-zinc-500">Total Supply</p>
-                  <p className="text-2xl font-bold">
-                    {(currentIpo!.totalSupply / 1_000_000).toFixed(1)}M
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-zinc-50 p-4">
+                  <p className="text-xs text-zinc-400">
+                    {primaryOffering?.status === "closed" ? "Valuation Raised At" : "Valuation"}
                   </p>
+                  <p className="mt-1 font-semibold text-zinc-900">{formatUsdt(valuation)}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-zinc-500">Valuation</p>
-                  <p className="text-2xl font-bold">
-                    ${formatNumber(currentIpo!.totalSupply * currentIpo!.pricePerToken)}
+                <div className="rounded-xl bg-zinc-50 p-4">
+                  <p className="text-xs text-zinc-400">Amount Being Raised</p>
+                  <p className="mt-1 font-semibold text-zinc-900">{formatUsdt(raiseTarget)}</p>
+                </div>
+                <div className="rounded-xl bg-zinc-50 p-4">
+                  <p className="text-xs text-zinc-400">Max / Account</p>
+                  <p className="mt-1 font-semibold text-zinc-900">{formatUsdt(accountMax)}</p>
+                </div>
+                <div className="rounded-xl bg-zinc-50 p-4">
+                  <p className="text-xs text-zinc-400">Est. Monthly Payout</p>
+                  <p className="mt-1 font-semibold text-emerald-600">{formatUsdt(estimatedMonthlyDividend)}</p>
+                </div>
+                <div className="rounded-xl bg-zinc-50 p-4">
+                  <p className="text-xs text-zinc-400">Token Price</p>
+                  <p className="mt-1 font-semibold text-zinc-900">
+                    {formatUsdt(primaryOffering?.pricePerToken ?? currentPrice ?? 0, 2)}
                   </p>
                 </div>
               </div>
-              {activeIpo && (
-                <div className="mt-6">
+
+              {primaryOffering ? (
+                <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span className="text-zinc-400">{percentSold}% sold</span>
-                    <span className="text-zinc-500">
-                      {(activeIpo.totalSupply - ipoSold).toLocaleString()} remaining
-                    </span>
+                    <span className="text-zinc-500">{formatUsdt(raised)} raised</span>
+                    <span className="text-zinc-400">{percentRaised}% funded</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-zinc-800">
-                    <div
-                      className="h-full rounded-full bg-emerald-500 transition-all"
-                      style={{ width: `${percentSold}%` }}
-                    />
+                  <div className="h-2 w-full rounded-full bg-zinc-100">
+                    <div className="h-full rounded-full bg-lime" style={{ width: `${percentRaised}%` }} />
                   </div>
+                  <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+                    <CalendarClock className="h-4 w-4" />
+                    {primaryOffering.status === "active"
+                      ? `Ends ${formatDate(primaryOffering.endsAt)}`
+                      : primaryOffering.status === "closed"
+                        ? `Completed ${formatDate(primaryOffering.endsAt)}`
+                        : `Starts ${formatDate(primaryOffering.startsAt)}`}
+                  </p>
                 </div>
-              )}
-              <div className="mt-4 flex items-center gap-2 text-sm text-zinc-500">
-                <Clock className="h-4 w-4" />
-                {activeIpo
-                  ? `Ends ${new Date(currentIpo!.endsAt).toLocaleDateString()}`
-                  : `Starts ${new Date(currentIpo!.startsAt).toLocaleDateString()}`}
-              </div>
-            </div>
-          ) : (
-            /* Post-IPO price card */
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-              <p className="text-sm text-zinc-500">Current Price</p>
-              <div className="flex items-end gap-3">
-                {currentPrice !== null ? (
-                  <>
-                    <p className="text-4xl font-bold">${currentPrice.toFixed(2)}</p>
-                    {priceChange24h !== null && (
-                      <p
-                        className={`mb-1 flex items-center gap-1 text-sm font-medium ${
-                          priceChange24h >= 0 ? "text-emerald-400" : "text-red-400"
-                        }`}
-                      >
-                        {priceChange24h >= 0 ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        {priceChange24h >= 0 ? "+" : ""}
-                        {priceChange24h.toFixed(2)}% (24h)
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-4xl font-bold text-zinc-600">—</p>
-                )}
-              </div>
-
-              {/* Mini price chart */}
-              {priceHistory && priceHistory.length > 1 && (
-                <div className="mt-6 h-32">
-                  <MiniChart data={priceHistory.map((p) => p.price)} />
-                </div>
-              )}
-              {(!priceHistory || priceHistory.length <= 1) && (
-                <div className="mt-6 flex h-32 items-center justify-center rounded-lg border border-dashed border-zinc-700 text-sm text-zinc-600">
-                  Chart data will appear after trades begin
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Action card */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          {activeIpo ? (
-            <>
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                <Rocket className="h-5 w-5" /> Invest in IPO
-              </h3>
-              <IPOPurchaseForm
-                ipoId={activeIpo.ipoId}
-                pricePerToken={activeIpo.pricePerToken}
-                remaining={activeIpo.totalSupply - ipoSold}
-                onSuccess={() => { setPurchaseSuccess(true); refetchIpos(); }}
-              />
-            </>
-          ) : upcomingIpo ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-              <Clock className="h-10 w-10 text-yellow-400" />
-              <p className="font-semibold">IPO coming soon</p>
-              <p className="text-sm text-zinc-500">
-                Starts {new Date(upcomingIpo.startsAt).toLocaleDateString()}
-              </p>
-            </div>
-          ) : currentPrice !== null ? (
-            <>
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                <ArrowRightLeft className="h-5 w-5" /> Trade
-              </h3>
-              <TradeForm
-                creatorId={creator.creatorId}
-                creatorName={creator.name}
-                currentPrice={currentPrice}
-                onTraded={() => refetchPrice()}
-              />
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center text-zinc-500">
-              <ArrowRightLeft className="h-10 w-10" />
-              <p className="font-semibold">Trading not yet available</p>
-              <p className="text-sm">No price established for this creator.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {[
-          { icon: Users, label: "Subscribers", value: formatNumber(creator.subscriberCount ?? 0) },
-          { icon: Eye, label: "Avg Views", value: formatNumber(creator.avgViews ?? 0) },
-          { icon: DollarSign, label: "Revenue/mo", value: formatUSD(creator.monthlyRevenue ?? 0), highlight: true },
-          { icon: TrendingUp, label: "Valuation", value: formatUSD(creator.valuation ?? 0) },
-        ].map(({ icon: Icon, label, value, highlight }) => (
-          <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <div className="mb-2 flex items-center gap-2 text-zinc-500">
-              <Icon className="h-4 w-4" />
-              <span className="text-xs">{label}</span>
-            </div>
-            <p className={`text-xl font-bold ${highlight ? "text-emerald-400" : ""}`}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Recent trades (post-IPO only) */}
-      {!isIPOPhase && (
-        <div className="mt-6">
-          <RecentTrades creatorId={creator.creatorId} />
-        </div>
-      )}
-
-      {/* Dividend Info (post-IPO only) */}
-      {!isIPOPhase && (
-        <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          <h3 className="mb-4 text-lg font-semibold">Dividend Info</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-zinc-500">Revenue Share</p>
-              <p className="text-lg font-semibold">
-                {((creator.revenueShareBps ?? 0) / 100).toFixed(1)}%
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-zinc-500">Est. Annual Yield</p>
-              <p className="text-lg font-semibold text-emerald-400">—</p>
-            </div>
-            <div>
-              <p className="text-sm text-zinc-500">Next Payout</p>
-              <p className="text-lg font-semibold">Monthly</p>
+              ) : null}
             </div>
           </div>
-        </div>
-      )}
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+            {activeOffering ? (
+              <>
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">
+                  <Rocket className="h-5 w-5 text-emerald-600" />
+                  Live Offering
+                </h3>
+                <OfferingInvestForm
+                  ipoId={activeOffering.ipoId}
+                  pricePerToken={activeOffering.pricePerToken}
+                  remaining={Math.min(
+                    activeOffering.totalSupply - (activeOffering.sold ?? 0),
+                    Math.floor(
+                      Math.max(
+                        0,
+                        (activeOffering.raiseTargetUsd || activeOffering.totalSupply * activeOffering.pricePerToken) -
+                          (activeOffering.raisedUsd ?? 0),
+                      ) / activeOffering.pricePerToken,
+                    ),
+                  )}
+                  remainingRaiseUsd={Math.max(
+                    0,
+                    (activeOffering.raiseTargetUsd || activeOffering.totalSupply * activeOffering.pricePerToken) -
+                      (activeOffering.raisedUsd ?? 0),
+                  )}
+                  maxInvestmentPerAccountUsd={
+                    activeOffering.maxInvestmentPerAccountUsd ||
+                    activeOffering.raiseTargetUsd ||
+                    activeOffering.totalSupply * activeOffering.pricePerToken
+                  }
+                  onSuccess={() => refetchIpos()}
+                />
+              </>
+            ) : upcomingOffering ? (
+              <div className="space-y-4 text-center">
+                <ClockBadge />
+                <div>
+                  <p className="font-semibold text-zinc-900">Offering coming soon</p>
+                  <p className="mt-1 text-sm text-zinc-500">Starts {formatDate(upcomingOffering.startsAt)}</p>
+                </div>
+                <Button
+                  variant={notified ? "secondary" : "default"}
+                  onClick={() => setNotified(true)}
+                  className="w-full"
+                >
+                  <Bell className="h-4 w-4" />
+                  {notified ? "Notification Set" : "Notify Me When Live"}
+                </Button>
+              </div>
+            ) : currentPrice !== null ? (
+              <>
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">
+                  <ArrowRightLeft className="h-5 w-5 text-zinc-500" />
+                  Buy Creator Token
+                </h3>
+                <TradeForm
+                  creatorId={creator.creatorId}
+                  creatorName={creator.name}
+                  currentPrice={currentPrice}
+                  onTraded={() => refetchPrice()}
+                />
+              </>
+            ) : (
+              <div className="py-6 text-center text-sm text-zinc-400">Trading is not available for this creator yet.</div>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
-/* ── Mini SVG Chart ────────────────────────────────────────────────── */
-
-function MiniChart({ data }: { data: number[] }) {
-  if (data.length < 2) return null;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const w = 600;
-  const h = 120;
-  const pad = 4;
-
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * (w - pad * 2) + pad;
-      const y = h - pad - ((v - min) / range) * (h - pad * 2);
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  const isUp = data[data.length - 1] >= data[0];
-
+function ClockBadge() {
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-full w-full" preserveAspectRatio="none">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={isUp ? "#10b981" : "#ef4444"}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+      <CalendarClock className="h-6 w-6" />
+    </div>
   );
 }

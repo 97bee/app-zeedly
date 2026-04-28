@@ -18,7 +18,7 @@ import { getOpenfort } from "@/lib/openfort";
 
 const NavItems = [
   { href: "/explore", label: "Explore", icon: Compass },
-  { href: "/ipo", label: "IPOs", icon: Rocket },
+  { href: "/offerings", label: "Offerings", icon: Rocket },
   { href: "/portfolio", label: "Portfolio", icon: PieChart },
   { href: "/wallet", label: "Wallet", icon: Wallet },
   { href: "/settings", label: "Settings", icon: Settings },
