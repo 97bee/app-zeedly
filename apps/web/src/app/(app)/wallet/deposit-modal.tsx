@@ -14,9 +14,11 @@ interface Props {
   onSuccess: () => void;
 }
 
-const stripePromise = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null;
+const stripePublishableKey = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const hasStripePublishableKey =
+  /^pk_(test|live)_/.test(stripePublishableKey) &&
+  !/REPLACE_ME|placeholder|your_|xxx|example/i.test(stripePublishableKey);
+const stripePromise = hasStripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 const CURRENCIES = ["GBP", "USD", "EUR"] as const;
 const FALLBACK_RATES: Record<(typeof CURRENCIES)[number], number> = {
@@ -51,19 +53,34 @@ function StripeDepositForm({
   const stripe = useStripe();
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || !isElementReady) return;
 
     setIsSubmitting(true);
-    const result = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/wallet`,
-      },
-      redirect: "if_required",
-    });
+    const submitResult = await elements.submit();
+    if (submitResult.error) {
+      setIsSubmitting(false);
+      onError(submitResult.error.message ?? "Stripe payment form could not be submitted");
+      return;
+    }
+
+    let result;
+    try {
+      result = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/wallet`,
+        },
+        redirect: "if_required",
+      });
+    } catch (err) {
+      setIsSubmitting(false);
+      onError(err instanceof Error ? err.message : "Stripe payment failed");
+      return;
+    }
     setIsSubmitting(false);
 
     if (result.error) {
@@ -76,8 +93,11 @@ function StripeDepositForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      <Button type="submit" disabled={!stripe || !elements || isSubmitting} className="w-full">
+      <PaymentElement
+        onReady={() => setIsElementReady(true)}
+        onLoadError={(event) => onError(event.error.message ?? "Stripe payment form failed to load")}
+      />
+      <Button type="submit" disabled={!stripe || !elements || !isElementReady || isSubmitting} className="w-full">
         {isSubmitting ? "Confirming..." : "Pay with Stripe"}
       </Button>
     </form>
@@ -111,7 +131,7 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
 
   async function handleCreateIntent() {
     if (!stripePromise) {
-      setError("Stripe publishable key is not configured");
+      setError("Stripe publishable key is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your pk_test key.");
       return;
     }
     if (amount < 10) {

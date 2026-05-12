@@ -1066,7 +1066,7 @@ export default function ExplorePage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <h1 className="text-[40px] font-black leading-[1.02] tracking-[-0.07em] text-slate-950 sm:text-[56px]">
-                Invest in tomorrow's <br className="hidden sm:block" />
+                Invest in tomorrow&apos;s <br className="hidden sm:block" />
                 <span className="bg-gradient-to-r from-slate-950 via-slate-700 to-slate-500 bg-clip-text text-transparent">
                   creator economy.
                 </span>

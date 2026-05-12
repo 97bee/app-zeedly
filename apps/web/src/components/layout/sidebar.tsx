@@ -124,10 +124,6 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     if (mobileOpen) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";
