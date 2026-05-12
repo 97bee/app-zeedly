@@ -17,6 +17,7 @@ export interface ZeedlyApiStackProps extends cdk.StackProps {
   solanaRpcUrl: string;
   apiSecretName?: string;
   openfortPublishableKey?: string;
+  corsOrigins?: string;
 }
 
 export class ZeedlyApiStack extends Stack {
@@ -59,6 +60,7 @@ export class ZeedlyApiStack extends Stack {
       NODE_ENV: "production",
       DYNAMODB_TABLE: table.tableName,
       ...(props.openfortPublishableKey ? { OPENFORT_PUBLISHABLE_KEY: props.openfortPublishableKey } : {}),
+      ...(props.corsOrigins ? { CORS_ORIGINS: props.corsOrigins } : {}),
       SOLANA_RPC_URL: props.solanaRpcUrl,
       WEB_URL: props.webUrl,
       POWERTOOLS_SERVICE_NAME: `zeedly-api-${stage}`,

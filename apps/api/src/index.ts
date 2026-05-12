@@ -14,11 +14,16 @@ import { stripe } from "./stripe/index.js";
 import { TransactionEntity } from "./db/index.js";
 
 const app = new Hono();
+const allowedOrigins = buildAllowedOrigins();
 
 app.use(
   "/*",
   cors({
-    origin: [env.WEB_URL],
+    origin: (origin) => {
+      const normalizedOrigin = normalizeOrigin(origin);
+      return normalizedOrigin && allowedOrigins.has(normalizedOrigin) ? normalizedOrigin : null;
+    },
+    allowHeaders: ["Authorization", "Content-Type"],
     credentials: true,
   }),
 );
@@ -89,4 +94,23 @@ async function startLocalServer() {
 // Local dev server (IS_LOCAL=true pnpm dev)
 if (env.IS_LOCAL) {
   void startLocalServer();
+}
+
+function buildAllowedOrigins() {
+  return new Set(
+    [env.WEB_URL, ...(env.CORS_ORIGINS?.split(",") ?? [])]
+      .map(normalizeOrigin)
+      .filter((origin): origin is string => Boolean(origin)),
+  );
+}
+
+function normalizeOrigin(value: string | undefined | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed.replace(/\/+$/, "");
+  }
 }

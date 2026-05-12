@@ -6,7 +6,6 @@ import {
   Compass,
   Wallet,
   PieChart,
-  Rocket,
   Settings,
   LogOut,
   ShieldCheck,
@@ -18,7 +17,6 @@ import { getOpenfort } from "@/lib/openfort";
 
 const NavItems = [
   { href: "/explore", label: "Explore", icon: Compass },
-  { href: "/offerings", label: "Offerings", icon: Rocket },
   { href: "/portfolio", label: "Portfolio", icon: PieChart },
   { href: "/wallet", label: "Wallet", icon: Wallet },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -33,8 +31,8 @@ const AdminItems = [
 ];
 
 const sections = [
-  { label: "Market", items: NavItems.slice(0, 3) },
-  { label: "Account", items: NavItems.slice(3) },
+  { label: "Market", items: NavItems.slice(0, 2) },
+  { label: "Account", items: NavItems.slice(2) },
   { label: "Creator", items: [...CreatorItems, ...AdminItems] },
 ];
 

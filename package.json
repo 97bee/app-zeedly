@@ -8,6 +8,7 @@
     "lint": "turbo lint",
     "dev:web": "turbo dev --filter=@zeedly/web",
     "dev:api": "turbo dev --filter=@zeedly/api",
+    "api:seed:dev": "pnpm --filter @zeedly/api run seed:dev",
     "infra": "pnpm --filter @zeedly/infra",
     "infra:bootstrap": "AWS_PROFILE=zeedly pnpm --filter @zeedly/infra run bootstrap",
     "infra:synth": "pnpm --filter @zeedly/infra run synth",

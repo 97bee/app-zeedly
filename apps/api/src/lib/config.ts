@@ -13,6 +13,7 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   SOLANA_RPC_URL: z.string().default("https://api.devnet.solana.com"),
   WEB_URL: z.string().default("http://localhost:3000"),
+  CORS_ORIGINS: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 

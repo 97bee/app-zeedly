@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "IS_LOCAL=true node --env-file=.env --watch --import tsx src/index.ts",
     "build": "tsup src/index.ts --format esm",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "seed:dev": "AWS_REGION=us-east-1 DYNAMODB_TABLE=zeedly-dev tsx scripts/seed-dev.ts"
   },
   "dependencies": {
     "@aws-lambda-powertools/logger": "^2.29.0",
