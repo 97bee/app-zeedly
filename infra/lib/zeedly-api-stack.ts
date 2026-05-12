@@ -84,6 +84,7 @@ export class ZeedlyApiStack extends Stack {
     const apiFunction = new nodejs.NodejsFunction(this, "ZeedlyApiFunction", {
       functionName,
       entry: path.join(repoRoot, "apps/api/src/index.ts"),
+      depsLockFilePath: path.join(repoRoot, "pnpm-lock.yaml"),
       handler: "handler",
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
