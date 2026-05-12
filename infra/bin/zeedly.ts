@@ -11,12 +11,15 @@ const solanaRpcUrl =
   process.env.SOLANA_RPC_URL ??
   "https://api.devnet.solana.com";
 const apiSecretName = app.node.tryGetContext("apiSecretName") ?? process.env.API_SECRET_NAME;
+const openfortPublishableKey =
+  app.node.tryGetContext("openfortPublishableKey") ?? process.env.OPENFORT_PUBLISHABLE_KEY;
 
 new ZeedlyApiStack(app, `ZeedlyApi-${stage}`, {
   stage,
   webUrl,
   solanaRpcUrl,
   apiSecretName,
+  openfortPublishableKey,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION ?? process.env.AWS_REGION ?? "eu-west-1",

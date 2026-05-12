@@ -93,9 +93,9 @@ function MiniLineChart({
           <circle key={`${point.label}-${point.value}`} cx={point.x} cy={point.y} r="4" fill={color} />
         ))}
       </svg>
-      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-zinc-400">
+      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400">
         <span>{data[0].label}</span>
-        <span className="text-center text-zinc-500">{valueFormatter(data[Math.floor(data.length / 2)].value)}</span>
+        <span className="text-center text-slate-500">{valueFormatter(data[Math.floor(data.length / 2)].value)}</span>
         <span className="text-right">{data[data.length - 1].label}</span>
       </div>
     </div>
@@ -116,13 +116,13 @@ function ChartPanel({
   valueFormatter?: (value: number) => string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-          <Icon className="h-4 w-4 text-zinc-400" />
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+          <Icon className="h-4 w-4 text-slate-400" />
           {title}
         </h3>
-        <span className="text-xs text-zinc-400">{formatNumber(data[data.length - 1]?.value ?? 0)}</span>
+        <span className="text-xs text-slate-400">{formatNumber(data[data.length - 1]?.value ?? 0)}</span>
       </div>
       <MiniLineChart data={data} tone={tone} valueFormatter={valueFormatter} />
     </div>
@@ -191,7 +191,7 @@ function OfferingInvestForm({
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-center">
         <CheckCircle2 className="mx-auto h-6 w-6 text-emerald-600" />
         <p className="mt-2 font-semibold text-emerald-700">Participation confirmed</p>
-        <p className="mt-1 text-sm text-zinc-500">KYC is required before claiming tokens after completion.</p>
+        <p className="mt-1 text-sm text-zinc-500">Your USDT is locked. KYC is required before claiming tokens after completion.</p>
       </div>
     );
   }
@@ -199,28 +199,28 @@ function OfferingInvestForm({
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1.5 block text-sm text-zinc-500">Commit from USDT balance</label>
+        <label className="mb-1.5 block text-sm text-zinc-500">Lock from available USDT balance</label>
         <input
           type="number"
           min={pricePerToken}
           max={Math.min(remaining * pricePerToken, remainingRaiseUsd, maxInvestmentPerAccountUsd)}
           value={amountStr}
           onChange={(event) => setAmountStr(event.target.value)}
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
+          className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-lg text-slate-950 placeholder-slate-400 transition-all focus:border-slate-950 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-950/5"
         />
         <p className="mt-1 text-xs text-zinc-400">
           Available: {formatUsdt(available, 2)} / Left: {formatUsdt(remainingRaiseUsd, 2)} / Max: {formatUsdt(maxInvestmentPerAccountUsd, 2)}
         </p>
       </div>
 
-      <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm">
+      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
         <div className="flex justify-between">
-          <span className="text-zinc-500">Estimated tokens</span>
-          <span className="font-medium text-zinc-900">{quantity.toLocaleString()}</span>
+          <span className="text-slate-500">Estimated tokens</span>
+          <span className="font-medium text-slate-950">{quantity.toLocaleString()}</span>
         </div>
         <div className="mt-2 flex justify-between">
-          <span className="text-zinc-500">USDT committed</span>
-          <span className="font-medium text-zinc-900">{formatUsdt(committed, 2)}</span>
+          <span className="text-slate-500">USDT to lock</span>
+          <span className="font-medium text-slate-950">{formatUsdt(committed, 2)}</span>
         </div>
       </div>
 
@@ -231,7 +231,7 @@ function OfferingInvestForm({
       ) : null}
 
       <Button onClick={handleInvest} disabled={purchase.isPending || quantity < 1} className="w-full">
-        {purchase.isPending ? "Processing..." : "Invest"}
+        {purchase.isPending ? "Locking..." : "Lock pledge"}
       </Button>
     </div>
   );
@@ -299,7 +299,7 @@ function TradeForm({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+      <div className="grid grid-cols-2 rounded-full border border-slate-200 bg-slate-50 p-1">
         {(["buy", "sell"] as const).map((option) => (
           <button
             key={option}
@@ -308,7 +308,7 @@ function TradeForm({
               setError(null);
             }}
             className={`rounded-lg py-2 text-sm font-medium transition-colors ${
-              side === option ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-900"
+              side === option ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
             }`}
           >
             {option === "buy" ? "Buy" : "Sell"}
@@ -325,7 +325,7 @@ function TradeForm({
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           placeholder="0.00"
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
+          className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-lg text-slate-950 placeholder-slate-400 transition-all focus:border-slate-950 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-950/5"
         />
       </div>
 
@@ -371,18 +371,18 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
   if (isLoading) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />;
   if (!trades?.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-6 py-10 text-center text-sm text-zinc-400">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-400 shadow-sm">
         No token trades yet.
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white">
-      <div className="border-b border-zinc-100 px-6 py-4">
-        <h3 className="text-lg font-semibold text-zinc-900">Recent Trades</h3>
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 px-6 py-4">
+        <h3 className="text-lg font-semibold text-slate-950">Recent Trades</h3>
       </div>
-      <div className="divide-y divide-zinc-50">
+      <div className="divide-y divide-slate-50">
         {trades.map((trade) => (
           <div key={trade.tradeId} className="flex items-center justify-between px-6 py-3">
             <div className="flex items-center gap-3">
@@ -393,11 +393,11 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
               >
                 {trade.side.toUpperCase()}
               </span>
-              <span className="text-sm text-zinc-700">{trade.quantity.toFixed(4)} tokens</span>
+              <span className="text-sm text-slate-700">{trade.quantity.toFixed(4)} tokens</span>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-zinc-900">{formatUsdt(trade.usdAmount, 2)}</p>
-              <p className="text-xs text-zinc-400">At {formatUsdt(trade.price, 2)}</p>
+              <p className="text-sm font-medium text-slate-950">{formatUsdt(trade.usdAmount, 2)}</p>
+              <p className="text-xs text-slate-400">At {formatUsdt(trade.price, 2)}</p>
             </div>
           </div>
         ))}
@@ -424,9 +424,9 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
       <div className="space-y-6">
         <div className="h-80 animate-pulse rounded-2xl bg-zinc-100" />
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="h-56 animate-pulse rounded-2xl bg-zinc-100" />
-          <div className="h-56 animate-pulse rounded-2xl bg-zinc-100" />
-          <div className="h-56 animate-pulse rounded-2xl bg-zinc-100" />
+          <div className="h-56 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-56 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-56 animate-pulse rounded-xl bg-slate-100" />
         </div>
       </div>
     );
@@ -434,7 +434,7 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
 
   if (!creator) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center text-zinc-500">
+      <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center text-slate-500 shadow-sm">
         Creator not found.
       </div>
     );
@@ -467,8 +467,8 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-        <div className="relative h-56 bg-zinc-900">
+      <section className="relative min-h-[340px] overflow-hidden rounded-[32px] bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
+        <div className="absolute inset-0">
           {artworkUrl ? (
             <Image
               src={artworkUrl}
@@ -476,16 +476,17 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
               fill
               unoptimized
               sizes="(min-width: 1280px) 960px, 100vw"
-              className="object-cover opacity-85"
+              className="object-cover"
             />
           ) : (
-            <div className="h-full w-full bg-[linear-gradient(135deg,#18181b,#365314_55%,#d4ec2c)]" />
+            <div className="h-full w-full bg-[linear-gradient(135deg,#0d0f14,#1e293b_54%,#334155)]" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.82),rgba(0,0,0,0.44)_56%,rgba(0,0,0,0.08))]" />
         </div>
-        <div className="px-6 pb-6">
-          <div className="-mt-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div className="flex items-end gap-4">
+
+        <div className="relative z-10 flex min-h-[340px] flex-col justify-end p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
               {creator.avatarUrl ? (
                 <Image
                   src={creator.avatarUrl}
@@ -493,17 +494,17 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
                   width={96}
                   height={96}
                   unoptimized
-                  className="h-24 w-24 rounded-2xl border-4 border-white object-cover shadow-sm"
+                  className="h-24 w-24 rounded-3xl border-4 border-white/90 object-cover shadow-[0_12px_34px_rgba(0,0,0,0.35)]"
                 />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-lime text-3xl font-bold text-zinc-900 shadow-sm">
+                <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white/90 bg-white text-3xl font-black text-slate-950 shadow-[0_12px_34px_rgba(0,0,0,0.35)]">
                   {creator.name[0]}
                 </div>
               )}
               <div className="pb-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-3xl font-bold font-serif text-zinc-900">{creator.name}</h1>
-                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                  <h1 className="text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">{creator.name}</h1>
+                  <span className="rounded-full border border-white/[0.15] bg-white/[0.12] px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur">
                     {primaryOffering?.status === "active"
                       ? "Offering Live"
                       : primaryOffering?.status === "closed"
@@ -512,20 +513,31 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-lime/25 px-3 py-1 text-xs font-medium text-zinc-800">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.15] bg-white/[0.12] px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur">
                     <Tag className="h-3 w-3" />
                     {genre}
                   </span>
                   {creator.tags?.slice(0, 3).map((tag) => (
-                    <span key={tag} className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-500">
+                    <span key={tag} className="rounded-full border border-white/[0.15] bg-white/[0.12] px-3 py-1 text-xs font-semibold text-white/70 backdrop-blur">
                       {tag}
                     </span>
                   ))}
                 </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-white/70">
+                  <span>
+                    <strong className="font-bold text-white">{formatNumber(creator.subscriberCount ?? 0)}</strong> subscribers
+                  </span>
+                  <span className="text-white/25">/</span>
+                  <span>
+                    <strong className="font-bold text-white">{formatNumber(totalViews)}</strong> total views
+                  </span>
+                  <span className="text-white/25">/</span>
+                  <span>{uploadFrequency}</span>
+                </div>
               </div>
             </div>
             {creator.youtubeUrl ? (
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary" className="bg-white text-slate-950 hover:bg-white/90">
                 <a href={creator.youtubeUrl} target="_blank" rel="noopener noreferrer">
                   <PlayCircle className="h-4 w-4" />
                   Go to Channel
@@ -546,12 +558,12 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
               { icon: Upload, label: "Upload Frequency", value: uploadFrequency },
               { icon: Tag, label: "Genre", value: genre },
             ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="rounded-2xl border border-zinc-200 bg-white p-5">
-                <div className="mb-2 flex items-center gap-2 text-zinc-400">
+              <div key={label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                <div className="mb-2 flex items-center gap-2 text-slate-400">
                   <Icon className="h-4 w-4" />
                   <span className="text-xs">{label}</span>
                 </div>
-                <p className="text-lg font-semibold text-zinc-900">{value}</p>
+                <p className="text-lg font-semibold text-slate-950">{value}</p>
               </div>
             ))}
           </div>
@@ -563,16 +575,16 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
           </div>
 
           <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-zinc-900">Channel Bio</h2>
-              <p className="mt-3 leading-7 text-zinc-600">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Channel Bio</h2>
+              <p className="mt-3 leading-7 text-slate-600">
                 {creator.bio ||
                   `${creator.name} is a ${genre.toLowerCase()} creator with a large recurring audience and a channel built around repeatable, high-retention formats.`}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-zinc-900">Background</h2>
-              <p className="mt-3 leading-7 text-zinc-600">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Background</h2>
+              <p className="mt-3 leading-7 text-slate-600">
                 {creator.background ||
                   "Zeedly tracks audience growth, view velocity, upload cadence, and expected revenue share to present the creator as an investable offering."}
               </p>
@@ -583,12 +595,12 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
         </main>
 
         <aside className="space-y-5">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-zinc-900">
+              <h2 className="text-lg font-semibold text-slate-950">
                 {primaryOffering?.status === "closed" ? "Token" : "Offering"}
               </h2>
-              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                 {primaryOffering?.dividendCadence ?? "Quarterly"} dividends
               </span>
             </div>
@@ -628,7 +640,7 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
                     <span className="text-zinc-400">{percentRaised}% funded</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-zinc-100">
-                    <div className="h-full rounded-full bg-lime" style={{ width: `${percentRaised}%` }} />
+                    <div className="h-full rounded-full bg-slate-950" style={{ width: `${percentRaised}%` }} />
                   </div>
                   <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
                     <CalendarClock className="h-4 w-4" />
@@ -643,7 +655,7 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             {activeOffering ? (
               <>
                 <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">

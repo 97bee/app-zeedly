@@ -14,8 +14,11 @@ function formatUsdt(amount: number) {
   }).format(Math.abs(amount))} USDT`;
 }
 
-function formatGbp(amount: number) {
-  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
+function formatFiat(amount: number, currency = "GBP") {
+  return new Intl.NumberFormat(currency === "GBP" ? "en-GB" : "en-US", {
+    style: "currency",
+    currency,
+  }).format(amount);
 }
 
 function formatDate(ts: number) {
@@ -59,9 +62,32 @@ export default function WalletPage() {
           <div className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-zinc-100" />
         ) : (
           <p className="mt-1 text-4xl font-bold text-zinc-900">
-            {formatUsdt(balance?.usdtBalance ?? balance?.usdcBalance ?? 0)}
+            {formatUsdt(balance?.availableUsdtBalance ?? balance?.usdtBalance ?? balance?.usdcBalance ?? 0)}
           </p>
         )}
+
+        {!balanceLoading ? (
+          <div className="mt-5 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl bg-zinc-50 p-4">
+              <p className="text-xs text-zinc-400">Available</p>
+              <p className="mt-1 font-semibold text-zinc-900">
+                {formatUsdt(balance?.availableUsdtBalance ?? balance?.usdtBalance ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-zinc-50 p-4">
+              <p className="text-xs text-zinc-400">Locked in offerings</p>
+              <p className="mt-1 font-semibold text-amber-600">
+                {formatUsdt(balance?.lockedUsdtBalance ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-zinc-50 p-4">
+              <p className="text-xs text-zinc-400">Internal total</p>
+              <p className="mt-1 font-semibold text-zinc-900">
+                {formatUsdt(balance?.totalUsdtBalance ?? balance?.usdtBalance ?? 0)}
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         {balance?.walletAddress && (
           <p className="mt-2 font-mono text-xs text-zinc-400 truncate max-w-xs">
@@ -140,7 +166,7 @@ export default function WalletPage() {
                           </span>
                           {tx.type === "deposit" && tx.fiatAmount ? (
                             <p className="text-xs text-zinc-400">
-                              {formatGbp(tx.fiatAmount)} converted to USDT
+                              {formatFiat(tx.fiatAmount, tx.fiatCurrency ?? "GBP")} converted to USDT
                             </p>
                           ) : null}
                         </div>

@@ -6,8 +6,9 @@ import {
   DividendPaymentEntity,
   IPOPurchaseEntity,
   IPOEntity,
+  UserEntity,
 } from "../db/index.js";
-import { getOffchainUsdtBalance } from "../services/offchain-wallet.js";
+import { getOffchainWalletSummary } from "../services/offchain-wallet.js";
 
 export const portfolioRouter = router({
   /**
@@ -15,14 +16,16 @@ export const portfolioRouter = router({
    * offering participations. Holdings include completed offering allocations.
    */
   getHoldings: protectedProcedure.query(async ({ ctx }) => {
-    const [usdtBalance, tradesResult, purchasesResult] = await Promise.all([
-      getOffchainUsdtBalance(ctx.userId),
+    const [wallet, tradesResult, purchasesResult, userResult] = await Promise.all([
+      getOffchainWalletSummary(ctx.userId),
       TradeEntity.query.byUser({ userId: ctx.userId }).go(),
       IPOPurchaseEntity.query.byUser({ userId: ctx.userId }).go(),
+      UserEntity.query.byUserId({ userId: ctx.userId }).go(),
     ]);
 
     const confirmedTrades = tradesResult.data.filter((t) => t.status === "confirmed");
-    const confirmedPurchases = purchasesResult.data.filter((p) => p.status === "confirmed");
+    const claimedPurchases = purchasesResult.data.filter((p) => p.status === "claimed" || p.status === "confirmed");
+    const user = userResult.data[0] ?? null;
 
     const ipoIds = [...new Set(purchasesResult.data.map((p) => p.ipoId))];
     const ipoResults = await Promise.all(
@@ -38,7 +41,7 @@ export const portfolioRouter = router({
       { quantity: number; totalCost: number; creatorId: string }
     >();
 
-    for (const purchase of confirmedPurchases) {
+    for (const purchase of claimedPurchases) {
       const ipo = ipoMap.get(purchase.ipoId);
       if (!ipo || ipo.status !== "closed") continue;
 
@@ -136,6 +139,16 @@ export const portfolioRouter = router({
         : ipo?.status === "closed"
           ? "completed"
           : "coming_soon";
+      const isLocked = purchase.status === "locked" || purchase.status === "claimable";
+      const isClaimed = purchase.status === "claimed" || purchase.status === "confirmed";
+      const canClaim = Boolean(ipo?.status === "closed" && isLocked && user?.kycStatus === "verified");
+      const claimStatus = isClaimed
+        ? "Claimed"
+        : ipo?.status !== "closed"
+          ? "Funds locked until offering is filled"
+          : user?.kycStatus === "verified"
+            ? "Ready to claim"
+            : "KYC required before token claim";
 
       return {
         purchaseId: purchase.purchaseId,
@@ -150,18 +163,24 @@ export const portfolioRouter = router({
         pricePerToken: ipo?.pricePerToken ?? 0,
         startsAt: ipo?.startsAt ?? null,
         endsAt: ipo?.endsAt ?? null,
-        kycRequiredBeforeClaim: state === "completed",
-        claimStatus: state === "completed" ? "KYC required before token claim" : "Allocation pending",
+        lockedUsdt: isLocked ? purchase.usdAmount : 0,
+        kycRequiredBeforeClaim: state === "completed" && !isClaimed && user?.kycStatus !== "verified",
+        canClaim,
+        claimStatus,
         createdAt: purchase.createdAt,
       };
     });
 
     return {
-      usdtBalance,
-      usdcBalance: usdtBalance,
+      usdtBalance: wallet.availableUsdtBalance,
+      usdcBalance: wallet.availableUsdtBalance,
+      availableUsdtBalance: wallet.availableUsdtBalance,
+      lockedUsdtBalance: wallet.lockedUsdtBalance,
+      totalUsdtBalance: wallet.totalUsdtBalance,
+      kycStatus: user?.kycStatus ?? "not_started",
       holdings,
       offerings,
-      totalPortfolioValue: usdtBalance + totalHoldingsValue,
+      totalPortfolioValue: wallet.availableUsdtBalance + wallet.lockedUsdtBalance + totalHoldingsValue,
     };
   }),
 

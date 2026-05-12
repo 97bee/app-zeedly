@@ -1,8 +1,18 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "./trpc.js";
-import { IPOEntity, IPOPurchaseEntity, TransactionEntity, CreatorEntity } from "../db/index.js";
-import { getOffchainUsdtBalance } from "../services/offchain-wallet.js";
+import {
+  IPOEntity,
+  IPOPurchaseEntity,
+  TransactionEntity,
+  CreatorEntity,
+  UserEntity,
+  ZeedlyService,
+} from "../db/index.js";
+import { getOffchainWalletSummary } from "../services/offchain-wallet.js";
+import { getSolanaWallet } from "../services/solana.js";
+
+const CLAIMABLE_PURCHASE_STATUSES = new Set(["locked", "claimable", "confirmed"]);
 
 export const ipoRouter = router({
   /**
@@ -98,7 +108,12 @@ export const ipoRouter = router({
 
       const purchases = await IPOPurchaseEntity.query.byUser({ userId: ctx.userId }).go();
       const userInvestedUsd = purchases.data
-        .filter((purchase) => purchase.ipoId === input.ipoId && purchase.status !== "failed")
+        .filter(
+          (purchase) =>
+            purchase.ipoId === input.ipoId &&
+            purchase.status !== "failed" &&
+            purchase.status !== "refunded",
+        )
         .reduce((sum, purchase) => sum + purchase.usdAmount, 0);
       const remainingAccountCapUsd = maxInvestmentPerAccountUsd - userInvestedUsd;
       if (remainingAccountCapUsd < ipo.pricePerToken || usdAmount > remainingAccountCapUsd) {
@@ -108,11 +123,11 @@ export const ipoRouter = router({
         });
       }
 
-      const balance = await getOffchainUsdtBalance(ctx.userId);
-      if (balance < usdAmount) {
+      const wallet = await getOffchainWalletSummary(ctx.userId);
+      if (wallet.availableUsdtBalance < usdAmount) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: `Insufficient USDT balance. Available: ${balance.toFixed(2)} USDT`,
+          message: `Insufficient available USDT balance. Available: ${wallet.availableUsdtBalance.toFixed(2)} USDT`,
         });
       }
 
@@ -122,48 +137,147 @@ export const ipoRouter = router({
       const newSold = sold + input.quantity;
       const offeringComplete = newRaisedUsd >= raiseTargetUsd;
       const now = Date.now();
-      const offeringPatch = offeringComplete
-        ? IPOEntity.patch({ ipoId: input.ipoId }).set({
-            sold: newSold,
-            raisedUsd: newRaisedUsd,
-            status: "closed",
-            completedAt: now,
-            tokenMintedAt: now,
-            tokenDispersedAt: now,
-          })
-        : IPOEntity.patch({ ipoId: input.ipoId }).set({
-            sold: newSold,
-            raisedUsd: newRaisedUsd,
-          });
 
-      await Promise.all([
-        IPOPurchaseEntity.create({
-          purchaseId,
-          ipoId: input.ipoId,
-          userId: ctx.userId,
-          quantity: input.quantity,
-          usdAmount,
-          asset: "USDT",
-          status: "confirmed",
-        }).go(),
-        TransactionEntity.create({
-          txId,
-          userId: ctx.userId,
-          type: "ipo_purchase",
-          amount: -usdAmount,
-          asset: "USDT",
-          referenceId: purchaseId,
-          status: "confirmed",
-        }).go(),
-        offeringPatch.go(),
-      ]);
+      await ZeedlyService.transaction
+        .write(({ ipo: ipoTxn, ipoPurchase: purchaseTxn, transaction: transactionTxn }) => [
+          purchaseTxn.create({
+            purchaseId,
+            ipoId: input.ipoId,
+            userId: ctx.userId,
+            quantity: input.quantity,
+            usdAmount,
+            asset: "USDT",
+            transactionId: txId,
+            status: "locked",
+          }).commit(),
+          transactionTxn.create({
+            txId,
+            userId: ctx.userId,
+            type: "ipo_purchase",
+            amount: -usdAmount,
+            asset: "USDT",
+            referenceId: purchaseId,
+            status: "pending",
+          }).commit(),
+          (offeringComplete
+            ? ipoTxn.patch({ ipoId: input.ipoId })
+                .set({
+                  sold: newSold,
+                  raisedUsd: newRaisedUsd,
+                  status: "closed",
+                  completedAt: now,
+                  tokenMintedAt: now,
+                })
+            : ipoTxn.patch({ ipoId: input.ipoId })
+                .set({
+                  sold: newSold,
+                  raisedUsd: newRaisedUsd,
+                })
+          )
+            .where((attr, { eq }) =>
+              `${eq(attr.status, "active")} AND ${eq(attr.sold, sold)} AND ${eq(attr.raisedUsd, raisedUsd)}`,
+            )
+            .commit(),
+        ])
+        .go();
 
       return {
         purchaseId,
         txId,
         usdAmount,
         asset: "USDT" as const,
+        status: "locked" as const,
         offeringComplete,
+      };
+    }),
+
+  /**
+   * Claim creator tokens after an offering is filled. This releases the
+   * internal USDT debit and records the claim handoff to the user's wallet.
+   */
+  claim: protectedProcedure
+    .input(z.object({ purchaseId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { nanoid } = await import("nanoid");
+
+      const purchaseResult = await IPOPurchaseEntity.query
+        .byPurchaseId({ purchaseId: input.purchaseId })
+        .go();
+      const purchase = purchaseResult.data[0];
+      if (!purchase || purchase.userId !== ctx.userId) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Allocation not found" });
+      }
+
+      if (purchase.status === "claimed") {
+        return {
+          purchaseId: purchase.purchaseId,
+          status: "claimed" as const,
+          txSig: purchase.txSig ?? null,
+        };
+      }
+
+      if (!CLAIMABLE_PURCHASE_STATUSES.has(purchase.status ?? "")) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Allocation is not claimable" });
+      }
+
+      const ipoResult = await IPOEntity.query.byIpoId({ ipoId: purchase.ipoId }).go();
+      const ipo = ipoResult.data[0];
+      if (!ipo || ipo.status !== "closed") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Offering is not filled yet" });
+      }
+
+      const userResult = await UserEntity.query.byUserId({ userId: ctx.userId }).go();
+      let user = userResult.data[0];
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      if (user.kycStatus !== "verified") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Complete KYC before claiming creator tokens",
+        });
+      }
+
+      let walletAddress = user.solanaPubkey ?? null;
+      if (!walletAddress && user.openfortUserId) {
+        walletAddress = await getSolanaWallet(user.openfortUserId);
+        if (walletAddress) {
+          await UserEntity.patch({ userId: ctx.userId }).set({ solanaPubkey: walletAddress }).go();
+          user = { ...user, solanaPubkey: walletAddress };
+        }
+      }
+
+      if (!walletAddress) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "No on-chain wallet address is available for this account",
+        });
+      }
+
+      const now = Date.now();
+      const txSig = `claim_${nanoid()}`;
+      const transactionId =
+        purchase.transactionId ??
+        (
+          await TransactionEntity.query.byUser({ userId: ctx.userId }).go()
+        ).data.find((tx) => tx.referenceId === purchase.purchaseId)?.txId;
+
+      await Promise.all([
+        IPOPurchaseEntity.patch({ purchaseId: input.purchaseId })
+          .set({ status: "claimed", claimedAt: now, txSig })
+          .go(),
+        ...(transactionId
+          ? [
+              TransactionEntity.patch({ txId: transactionId })
+                .set({ status: "confirmed", txSig })
+                .go(),
+            ]
+          : []),
+      ]);
+
+      return {
+        purchaseId: purchase.purchaseId,
+        status: "claimed" as const,
+        walletAddress,
+        txSig,
       };
     }),
 });

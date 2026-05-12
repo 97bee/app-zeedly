@@ -4,6 +4,7 @@ export interface User {
   role: "user" | "creator" | "admin";
   openfortUserId: string;
   solanaPubkey: string;
+  kycStatus: "not_started" | "pending" | "verified" | "rejected";
   createdAt: Date;
 }
 
@@ -121,13 +122,15 @@ export interface WalletBalance {
     creatorName: string;
     creatorSlug: string;
     state: "coming_soon" | "live" | "completed";
-    status: "pending" | "confirmed" | "failed";
+    status: "pending" | "locked" | "claimable" | "claimed" | "confirmed" | "failed" | "refunded";
     quantity: number;
     usdtAmount: number;
     pricePerToken: number;
     startsAt: Date | null;
     endsAt: Date | null;
+    lockedUsdt: number;
     kycRequiredBeforeClaim: boolean;
+    canClaim: boolean;
     claimStatus: string;
     createdAt: Date;
   }>;

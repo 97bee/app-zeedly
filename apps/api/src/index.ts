@@ -26,11 +26,12 @@ app.use(
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 /**
- * Stripe webhook — handles payment_intent.succeeded to confirm deposit transactions.
- * USDC transfer to user wallet happens here (stub for now; wire up OpenFort in Phase 3).
+ * Stripe webhook — confirms pending deposit ledger entries after Stripe
+ * verifies that the fiat payment succeeded.
  */
 app.post("/webhooks/stripe", async (c) => {
   if (!stripe) return c.json({ error: "Stripe not configured" }, 400);
+  if (!env.STRIPE_WEBHOOK_SECRET) return c.json({ error: "Stripe webhook secret not configured" }, 400);
 
   const sig = c.req.header("stripe-signature");
   if (!sig) return c.json({ error: "Missing signature" }, 400);
@@ -49,8 +50,16 @@ app.post("/webhooks/stripe", async (c) => {
     const { txId } = pi.metadata as { txId?: string };
     if (txId) {
       await TransactionEntity.patch({ txId }).set({ status: "confirmed" }).go();
-      // TODO Phase 3: transfer USDC to user's wallet via OpenFort
       logger.info("Deposit confirmed", { txId, amount: pi.amount });
+    }
+  }
+
+  if (event.type === "payment_intent.payment_failed") {
+    const pi = event.data.object;
+    const { txId } = pi.metadata as { txId?: string };
+    if (txId) {
+      await TransactionEntity.patch({ txId }).set({ status: "failed" }).go();
+      logger.info("Deposit failed", { txId, amount: pi.amount });
     }
   }
 

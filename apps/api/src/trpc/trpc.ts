@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { verifyOpenfortToken } from "../openfort/index.js";
 import { UserEntity } from "../db/index.js";
 
-export interface Context {
+export interface Context extends Record<string, unknown> {
   userId: string | null;
   email: string | null;
   role: "user" | "creator" | "admin" | null;

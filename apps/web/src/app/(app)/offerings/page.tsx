@@ -126,7 +126,7 @@ function InvestmentModal({ offering, onClose, onSuccess }: InvestmentModalProps)
         </div>
         <div className="space-y-4 p-6">
           <div>
-            <label className="mb-1.5 block text-sm text-zinc-500">Commit from USDT balance</label>
+            <label className="mb-1.5 block text-sm text-zinc-500">Lock from available USDT balance</label>
             <input
               type="number"
               min={offering.pricePerToken}
@@ -147,11 +147,11 @@ function InvestmentModal({ offering, onClose, onSuccess }: InvestmentModalProps)
               <span className="font-medium text-zinc-900">{quantity.toLocaleString()}</span>
             </div>
             <div className="mt-2 flex justify-between">
-              <span className="text-zinc-500">USDT committed</span>
+              <span className="text-zinc-500">USDT to lock</span>
               <span className="font-medium text-zinc-900">{formatUsdt(spend)}</span>
             </div>
             <p className="mt-3 border-t border-zinc-200 pt-3 text-xs text-zinc-500">
-              Tokens are allocated when the offering completes. KYC is required before token claim.
+              This pledge is frozen until the offering completes. KYC is required before token claim.
             </p>
           </div>
 
@@ -166,7 +166,7 @@ function InvestmentModal({ offering, onClose, onSuccess }: InvestmentModalProps)
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={purchase.isPending || quantity < 1} className="flex-1">
-              {purchase.isPending ? "Processing..." : "Invest"}
+              {purchase.isPending ? "Locking..." : "Lock pledge"}
             </Button>
           </div>
         </div>

@@ -7,6 +7,7 @@ const envSchema = z.object({
   DYNAMODB_TABLE: z.string().default("zeedly"),
   DYNAMODB_ENDPOINT: z.string().optional(), // for local DynamoDB (docker)
   OPENFORT_SECRET_KEY: z.string().default("sk_test_placeholder"),
+  OPENFORT_PUBLISHABLE_KEY: z.string().optional(),
   OPENFORT_SHIELD_SECRET: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),

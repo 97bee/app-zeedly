@@ -34,3 +34,20 @@ export const TRANSACTION_TYPE = {
   DIVIDEND: "dividend",
   IPO_PURCHASE: "ipo_purchase",
 } as const;
+
+export const KYC_STATUS = {
+  NOT_STARTED: "not_started",
+  PENDING: "pending",
+  VERIFIED: "verified",
+  REJECTED: "rejected",
+} as const;
+
+export const IPO_PURCHASE_STATUS = {
+  PENDING: "pending",
+  LOCKED: "locked",
+  CLAIMABLE: "claimable",
+  CLAIMED: "claimed",
+  CONFIRMED: "confirmed",
+  FAILED: "failed",
+  REFUNDED: "refunded",
+} as const;

@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRightLeft, DollarSign, Rocket, TrendingDown, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
 
 function formatUsdt(amount: number): string {
   return `${new Intl.NumberFormat("en-US", {
@@ -16,9 +18,10 @@ function signedUsdt(amount: number): string {
 }
 
 export default function PortfolioPage() {
-  const { data: portfolio, isLoading } = trpc.portfolio.getHoldings.useQuery();
+  const { data: portfolio, isLoading, refetch } = trpc.portfolio.getHoldings.useQuery();
   const { data: trades } = trpc.trade.myTrades.useQuery({ limit: 20 });
   const { data: dividends } = trpc.portfolio.dividends.useQuery();
+  const claim = trpc.ipo.claim.useMutation({ onSuccess: () => refetch() });
 
   if (isLoading) {
     return (
@@ -35,6 +38,7 @@ export default function PortfolioPage() {
   }
 
   const usdtBalance = portfolio?.usdtBalance ?? portfolio?.usdcBalance ?? 0;
+  const lockedUsdt = portfolio?.lockedUsdtBalance ?? 0;
   const holdings = portfolio?.holdings ?? [];
   const offerings = portfolio?.offerings ?? [];
   const totalHoldingsValue = holdings.reduce((sum, holding) => sum + holding.currentValue, 0);
@@ -53,7 +57,7 @@ export default function PortfolioPage() {
       </motion.h1>
 
       <motion.div
-        className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-5"
+        className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-6"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
@@ -61,6 +65,7 @@ export default function PortfolioPage() {
         {[
           { label: "Total Value", value: formatUsdt(totalValue) },
           { label: "USDT Balance", value: formatUsdt(usdtBalance) },
+          { label: "Locked USDT", value: formatUsdt(lockedUsdt) },
           { label: "Holdings Value", value: formatUsdt(totalHoldingsValue) },
           { label: "Offerings Entered", value: offerings.length.toLocaleString() },
         ].map((card) => (
@@ -143,14 +148,19 @@ export default function PortfolioPage() {
         ) : (
           <div className="divide-y divide-zinc-50">
             {offerings.map((entry) => (
-              <a
+              <div
                 key={entry.purchaseId}
-                href={entry.creatorSlug ? `/creator/${entry.creatorSlug}` : "/offerings"}
-                className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-zinc-50"
+                className="flex items-center justify-between gap-4 px-6 py-4"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-zinc-900">{entry.creatorName}</p>
+                    {entry.creatorSlug ? (
+                      <Link href={`/creator/${entry.creatorSlug}`} className="font-medium text-zinc-900 hover:underline">
+                        {entry.creatorName}
+                      </Link>
+                    ) : (
+                      <p className="font-medium text-zinc-900">{entry.creatorName}</p>
+                    )}
                     <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-500">
                       {entry.state === "live" ? "Live" : entry.state === "completed" ? "Completed" : "Coming soon"}
                     </span>
@@ -159,13 +169,28 @@ export default function PortfolioPage() {
                     {entry.quantity.toLocaleString()} tokens / {entry.claimStatus}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-zinc-900">{formatUsdt(entry.usdtAmount)}</p>
-                  <p className="text-xs text-zinc-400">
-                    {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : ""}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="font-medium text-zinc-900">{formatUsdt(entry.usdtAmount)}</p>
+                    <p className="text-xs text-zinc-400">
+                      {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : ""}
+                    </p>
+                  </div>
+                  {entry.canClaim ? (
+                    <Button
+                      size="sm"
+                      onClick={() => claim.mutate({ purchaseId: entry.purchaseId })}
+                      disabled={claim.isPending}
+                    >
+                      {claim.isPending ? "Claiming..." : "Claim"}
+                    </Button>
+                  ) : entry.kycRequiredBeforeClaim ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/settings">KYC</Link>
+                    </Button>
+                  ) : null}
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         )}

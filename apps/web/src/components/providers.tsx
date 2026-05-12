@@ -4,6 +4,7 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
+import { env } from "@/lib/env";
 import { trpc } from "@/lib/trpc";
 import { useAuthStore } from "@/store/auth";
 
@@ -13,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/trpc",
+          url: env.NEXT_PUBLIC_API_URL,
           transformer: superjson,
           headers: () => {
             const token = useAuthStore.getState().token;

@@ -39,7 +39,7 @@ async function getConfirmedTokenPosition(userId: string, creatorId: string): Pro
     .filter((t) => t.creatorId === creatorId && t.status === "confirmed")
     .reduce((sum, t) => sum + (t.side === "buy" ? t.quantity : -t.quantity), 0);
 
-  const confirmedPurchases = purchases.data.filter((p) => p.status === "confirmed");
+  const confirmedPurchases = purchases.data.filter((p) => p.status === "claimed" || p.status === "confirmed");
   if (confirmedPurchases.length === 0) return quantity;
 
   const ipos = await Promise.all(

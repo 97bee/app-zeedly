@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/auth";
+import { trpc } from "@/lib/trpc";
 
 const emailSchema = z.object({ email: z.string().email("Enter a valid email") });
 const passwordSchema = z.object({
@@ -39,6 +40,11 @@ function Section({ title, description, children, delay = 0 }: { title: string; d
 
 export default function SettingsPage() {
   const { email } = useAuthStore();
+  const { data: me, refetch: refetchMe } = trpc.auth.me.useQuery();
+  const requestKycReview = trpc.auth.requestKycReview.useMutation({
+    onSuccess: () => refetchMe(),
+  });
+  const kycStatus = me?.kycStatus ?? "not_started";
 
   const emailForm = useForm<EmailValues>({
     resolver: zodResolver(emailSchema),
@@ -124,7 +130,34 @@ export default function SettingsPage() {
           </form>
         </Section>
 
-        <Section title="Two-factor authentication" description="Add an extra layer of security" delay={0.15}>
+        <Section title="KYC verification" description="Required before claiming creator tokens" delay={0.15}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium capitalize text-zinc-700">
+                {kycStatus.replace("_", " ")}
+              </p>
+              <p className="mt-0.5 text-xs text-zinc-400">
+                {kycStatus === "verified"
+                  ? "Your account is ready for token claims."
+                  : kycStatus === "pending"
+                    ? "Your KYC review is pending."
+                    : "Submit your account for KYC review before claiming tokens."}
+              </p>
+            </div>
+            <motion.button
+              type="button"
+              disabled={kycStatus === "verified" || kycStatus === "pending" || requestKycReview.isPending}
+              onClick={() => requestKycReview.mutate()}
+              className="rounded-xl bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200 disabled:opacity-50"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {requestKycReview.isPending ? "Submitting..." : "Start review"}
+            </motion.button>
+          </div>
+        </Section>
+
+        <Section title="Two-factor authentication" description="Add an extra layer of security" delay={0.2}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-zinc-700">Authenticator app</p>
@@ -136,11 +169,11 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <Section title="Deposit history" delay={0.2}>
+        <Section title="Deposit history" delay={0.25}>
           <div className="py-6 text-center text-zinc-400 text-sm">No deposits yet</div>
         </Section>
 
-        <Section title="Trading history" delay={0.25}>
+        <Section title="Trading history" delay={0.3}>
           <div className="py-6 text-center text-zinc-400 text-sm">No trades yet</div>
         </Section>
       </div>

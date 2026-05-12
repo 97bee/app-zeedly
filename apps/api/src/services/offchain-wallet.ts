@@ -1,7 +1,15 @@
 import type { Transaction } from "../db/index.js";
-import { TransactionEntity } from "../db/index.js";
+import { IPOPurchaseEntity, TransactionEntity } from "../db/index.js";
 
-const GBP_TO_USDT_RATE = 1.25;
+const FIAT_TO_USDT_RATE = {
+  GBP: 1.25,
+  USD: 1,
+  EUR: 1.08,
+} as const;
+
+export type SupportedFiatCurrency = keyof typeof FIAT_TO_USDT_RATE;
+
+const LOCKED_PURCHASE_STATUSES = new Set(["locked", "claimable"]);
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
@@ -16,20 +24,55 @@ function signedLedgerAmount(tx: Transaction): number {
   return tx.amount;
 }
 
-export function quoteGbpToUsdt(amountGbp: number) {
-  const usdtAmount = roundMoney(amountGbp * GBP_TO_USDT_RATE);
+export function normalizeFiatCurrency(currency: string): SupportedFiatCurrency {
+  const normalized = currency.trim().toUpperCase();
+  if (normalized in FIAT_TO_USDT_RATE) return normalized as SupportedFiatCurrency;
+  return "GBP";
+}
+
+export function quoteFiatToUsdt(amount: number, currency: string) {
+  const fiatCurrency = normalizeFiatCurrency(currency);
+  const exchangeRate = FIAT_TO_USDT_RATE[fiatCurrency];
+  const usdtAmount = roundMoney(amount * exchangeRate);
 
   return {
-    fiatAmount: roundMoney(amountGbp),
-    fiatCurrency: "GBP" as const,
+    fiatAmount: roundMoney(amount),
+    fiatCurrency,
     asset: "USDT" as const,
-    exchangeRate: GBP_TO_USDT_RATE,
+    exchangeRate,
     usdtAmount,
   };
 }
 
+export function quoteGbpToUsdt(amountGbp: number) {
+  return quoteFiatToUsdt(amountGbp, "GBP");
+}
+
+export async function getOffchainWalletSummary(userId: string) {
+  const [transactionsResult, purchasesResult] = await Promise.all([
+    TransactionEntity.query.byUser({ userId }).go(),
+    IPOPurchaseEntity.query.byUser({ userId }).go(),
+  ]);
+
+  const totalUsdtBalance = roundMoney(
+    transactionsResult.data.reduce((sum, tx) => sum + signedLedgerAmount(tx), 0),
+  );
+
+  const lockedUsdtBalance = roundMoney(
+    purchasesResult.data
+      .filter((purchase) => LOCKED_PURCHASE_STATUSES.has(purchase.status ?? ""))
+      .reduce((sum, purchase) => sum + purchase.usdAmount, 0),
+  );
+
+  const availableUsdtBalance = roundMoney(Math.max(0, totalUsdtBalance - lockedUsdtBalance));
+
+  return {
+    availableUsdtBalance,
+    lockedUsdtBalance,
+    totalUsdtBalance,
+  };
+}
+
 export async function getOffchainUsdtBalance(userId: string): Promise<number> {
-  const result = await TransactionEntity.query.byUser({ userId }).go();
-  const balance = result.data.reduce((sum, tx) => sum + signedLedgerAmount(tx), 0);
-  return roundMoney(balance);
+  return (await getOffchainWalletSummary(userId)).availableUsdtBalance;
 }

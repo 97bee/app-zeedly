@@ -10,7 +10,12 @@
     "synth": "cdk synth",
     "diff": "cdk diff",
     "deploy": "cdk deploy",
-    "destroy": "cdk destroy"
+    "destroy": "cdk destroy",
+    "infra:bootstrap": "cdk bootstrap",
+    "infra:synth": "cdk synth",
+    "infra:diff": "cdk diff",
+    "infra:deploy": "cdk deploy",
+    "infra:destroy": "cdk destroy"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.0.0",

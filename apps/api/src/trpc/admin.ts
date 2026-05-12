@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "./trpc.js";
-import { CreatorEntity, IPOEntity } from "../db/index.js";
+import { CreatorEntity, IPOEntity, UserEntity } from "../db/index.js";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
@@ -21,6 +21,20 @@ export const adminRouter = router({
     ]);
     return [...pending.data, ...approved.data, ...live.data, ...rejected.data];
   }),
+
+  setUserKycStatus: adminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        kycStatus: z.enum(["not_started", "pending", "verified", "rejected"]),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      await UserEntity.patch({ userId: input.userId })
+        .set({ kycStatus: input.kycStatus, kycUpdatedAt: Date.now() })
+        .go();
+      return { success: true };
+    }),
 
   approveCreator: adminProcedure
     .input(z.object({ creatorId: z.string() }))

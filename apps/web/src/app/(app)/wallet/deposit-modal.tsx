@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { CheckCircle2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { env } from "@/lib/env";
 
 interface Props {
   open: boolean;
@@ -11,10 +14,23 @@ interface Props {
   onSuccess: () => void;
 }
 
-function formatGbp(amount: number) {
-  return new Intl.NumberFormat("en-GB", {
+const stripePromise = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
+
+const CURRENCIES = ["GBP", "USD", "EUR"] as const;
+const FALLBACK_RATES: Record<(typeof CURRENCIES)[number], number> = {
+  GBP: 1.25,
+  USD: 1,
+  EUR: 1.08,
+};
+
+type Currency = (typeof CURRENCIES)[number];
+
+function formatFiat(amount: number, currency: Currency) {
+  return new Intl.NumberFormat(currency === "GBP" ? "en-GB" : "en-US", {
     style: "currency",
-    currency: "GBP",
+    currency,
   }).format(amount);
 }
 
@@ -25,43 +41,93 @@ function formatUsdt(amount: number) {
   }).format(amount)} USDT`;
 }
 
+function StripeDepositForm({
+  onProcessing,
+  onError,
+}: {
+  onProcessing: (status: string) => void;
+  onError: (message: string) => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!stripe || !elements) return;
+
+    setIsSubmitting(true);
+    const result = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/wallet`,
+      },
+      redirect: "if_required",
+    });
+    setIsSubmitting(false);
+
+    if (result.error) {
+      onError(result.error.message ?? "Stripe payment failed");
+      return;
+    }
+
+    onProcessing(result.paymentIntent?.status ?? "processing");
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement />
+      <Button type="submit" disabled={!stripe || !elements || isSubmitting} className="w-full">
+        {isSubmitting ? "Confirming..." : "Pay with Stripe"}
+      </Button>
+    </form>
+  );
+}
+
 export function DepositModal({ open, onClose, onSuccess }: Props) {
   const [amountStr, setAmountStr] = useState("100");
+  const [currency, setCurrency] = useState<Currency>("GBP");
   const [error, setError] = useState<string | null>(null);
-  const [credited, setCredited] = useState<{ amount: number; balance: number } | null>(null);
-  const amountGbp = Number.parseFloat(amountStr) || 0;
-  const deposit = trpc.wallet.deposit.useMutation();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<{ amount: number; status: string } | null>(null);
+  const amount = Number.parseFloat(amountStr) || 0;
+  const createIntent = trpc.wallet.createDepositIntent.useMutation();
   const quote = trpc.wallet.quoteDeposit.useQuery(
-    { amountGbp },
-    { enabled: open && amountGbp >= 10 && amountGbp <= 10000 },
+    { amount, currency },
+    { enabled: open && amount >= 10 && amount <= 10000 },
   );
 
   const displayQuote = useMemo(() => {
     if (quote.data) return quote.data;
+    const exchangeRate = FALLBACK_RATES[currency];
     return {
-      fiatAmount: amountGbp,
-      fiatCurrency: "GBP" as const,
+      fiatAmount: amount,
+      fiatCurrency: currency,
       asset: "USDT" as const,
-      exchangeRate: 1.25,
-      usdtAmount: Math.round(amountGbp * 125) / 100,
+      exchangeRate,
+      usdtAmount: Math.round(amount * exchangeRate * 100) / 100,
     };
-  }, [amountGbp, quote.data]);
+  }, [amount, currency, quote.data]);
 
-  async function handleDeposit() {
-    if (amountGbp < 10) {
-      setError("Minimum deposit is GBP 10");
+  async function handleCreateIntent() {
+    if (!stripePromise) {
+      setError("Stripe publishable key is not configured");
       return;
     }
-    if (amountGbp > 10000) {
-      setError("Maximum deposit is GBP 10,000");
+    if (amount < 10) {
+      setError(`Minimum deposit is ${currency} 10`);
+      return;
+    }
+    if (amount > 10000) {
+      setError(`Maximum deposit is ${currency} 10,000`);
       return;
     }
 
     setError(null);
     try {
-      const result = await deposit.mutateAsync({ amountGbp });
-      setCredited({ amount: result.usdtAmount, balance: result.balance });
-      onSuccess();
+      const result = await createIntent.mutateAsync({ amount, currency });
+      if (!result.clientSecret) throw new Error("Stripe did not return a client secret");
+      setClientSecret(result.clientSecret);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Deposit failed");
     }
@@ -69,8 +135,10 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
 
   function handleClose() {
     setAmountStr("100");
+    setCurrency("GBP");
     setError(null);
-    setCredited(null);
+    setClientSecret(null);
+    setProcessing(null);
     onClose();
   }
 
@@ -87,27 +155,69 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
         </div>
 
         <div className="p-6">
-          {credited ? (
+          {processing ? (
             <div className="space-y-5 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-zinc-900">{formatUsdt(credited.amount)} credited</p>
+                <p className="text-lg font-semibold text-zinc-900">Payment {processing.status}</p>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Available balance: {formatUsdt(credited.balance)}
+                  {formatUsdt(processing.amount)} will be credited after Stripe confirms the payment webhook.
                 </p>
               </div>
               <Button onClick={handleClose} className="w-full">
                 Done
               </Button>
             </div>
+          ) : clientSecret && stripePromise ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">You pay</span>
+                  <span className="font-medium text-zinc-900">
+                    {formatFiat(displayQuote.fiatAmount, displayQuote.fiatCurrency)}
+                  </span>
+                </div>
+                <div className="mt-2 flex justify-between">
+                  <span className="text-zinc-500">Estimated credit</span>
+                  <span className="font-semibold text-emerald-600">{formatUsdt(displayQuote.usdtAmount)}</span>
+                </div>
+              </div>
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <StripeDepositForm
+                  onError={setError}
+                  onProcessing={(status) => {
+                    setProcessing({ amount: displayQuote.usdtAmount, status });
+                    onSuccess();
+                  }}
+                />
+              </Elements>
+              <Button variant="ghost" onClick={() => setClientSecret(null)} className="w-full">
+                Change amount
+              </Button>
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm text-zinc-500">Amount to deposit (GBP)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">GBP</span>
+                <label className="mb-1.5 block text-sm text-zinc-500">Amount to deposit</label>
+                <div className="grid grid-cols-[92px_1fr] gap-2">
+                  <select
+                    value={currency}
+                    onChange={(event) => setCurrency(event.target.value as Currency)}
+                    className="rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm font-medium text-zinc-900 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
+                  >
+                    {CURRENCIES.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="number"
                     min="10"
@@ -115,10 +225,10 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                     step="1"
                     value={amountStr}
                     onChange={(event) => setAmountStr(event.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white py-3 pl-14 pr-4 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
                   />
                 </div>
-                <p className="mt-1 text-xs text-zinc-400">Min GBP 10 / Max GBP 10,000</p>
+                <p className="mt-1 text-xs text-zinc-400">Min {currency} 10 / Max {currency} 10,000</p>
               </div>
 
               <div className="grid grid-cols-4 gap-2">
@@ -128,7 +238,7 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                     onClick={() => setAmountStr(String(preset))}
                     className="rounded-xl border border-zinc-200 bg-zinc-50 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-white"
                   >
-                    GBP {preset}
+                    {currency} {preset}
                   </button>
                 ))}
               </div>
@@ -136,12 +246,14 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">You pay</span>
-                  <span className="font-medium text-zinc-900">{formatGbp(displayQuote.fiatAmount)}</span>
+                  <span className="font-medium text-zinc-900">
+                    {formatFiat(displayQuote.fiatAmount, displayQuote.fiatCurrency)}
+                  </span>
                 </div>
                 <div className="mt-2 flex justify-between text-sm">
                   <span className="text-zinc-500">Converted at</span>
                   <span className="font-medium text-zinc-900">
-                    1 GBP = {displayQuote.exchangeRate.toFixed(2)} USDT
+                    1 {displayQuote.fiatCurrency} = {displayQuote.exchangeRate.toFixed(2)} USDT
                   </span>
                 </div>
                 <div className="mt-3 border-t border-zinc-200 pt-3">
@@ -159,11 +271,11 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
               )}
 
               <Button
-                onClick={handleDeposit}
-                disabled={deposit.isPending || amountGbp < 10 || amountGbp > 10000}
+                onClick={handleCreateIntent}
+                disabled={createIntent.isPending || amount < 10 || amount > 10000}
                 className="w-full"
               >
-                {deposit.isPending ? "Crediting..." : "Credit USDT balance"}
+                {createIntent.isPending ? "Preparing Stripe..." : "Continue to Stripe"}
               </Button>
             </div>
           )}

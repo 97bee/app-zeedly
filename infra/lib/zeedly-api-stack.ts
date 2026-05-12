@@ -16,6 +16,7 @@ export interface ZeedlyApiStackProps extends cdk.StackProps {
   webUrl: string;
   solanaRpcUrl: string;
   apiSecretName?: string;
+  openfortPublishableKey?: string;
 }
 
 export class ZeedlyApiStack extends Stack {
@@ -57,6 +58,7 @@ export class ZeedlyApiStack extends Stack {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
       NODE_ENV: "production",
       DYNAMODB_TABLE: table.tableName,
+      ...(props.openfortPublishableKey ? { OPENFORT_PUBLISHABLE_KEY: props.openfortPublishableKey } : {}),
       SOLANA_RPC_URL: props.solanaRpcUrl,
       WEB_URL: props.webUrl,
       POWERTOOLS_SERVICE_NAME: `zeedly-api-${stage}`,
@@ -70,6 +72,7 @@ export class ZeedlyApiStack extends Stack {
     if (apiSecret) {
       for (const key of [
         "OPENFORT_SECRET_KEY",
+        "OPENFORT_PUBLISHABLE_KEY",
         "OPENFORT_SHIELD_SECRET",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",

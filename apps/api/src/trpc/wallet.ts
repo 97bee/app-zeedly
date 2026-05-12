@@ -3,7 +3,22 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "./trpc.js";
 import { UserEntity, TransactionEntity } from "../db/index.js";
 import { getSolanaWallet } from "../services/solana.js";
-import { getOffchainUsdtBalance, quoteGbpToUsdt } from "../services/offchain-wallet.js";
+import {
+  getOffchainWalletSummary,
+  normalizeFiatCurrency,
+  quoteFiatToUsdt,
+} from "../services/offchain-wallet.js";
+import { stripe } from "../stripe/index.js";
+
+const depositInput = z.object({
+  amount: z.number().min(10).max(10000),
+  currency: z.enum(["GBP", "USD", "EUR", "gbp", "usd", "eur"]).default("GBP"),
+});
+
+function toMinorUnits(amount: number, currency: string) {
+  // Supported currencies are all 2-decimal currencies.
+  return Math.round(amount * 100);
+}
 
 export const walletRouter = router({
   /**
@@ -26,12 +41,15 @@ export const walletRouter = router({
     }
 
     const walletAddress = user.solanaPubkey ?? null;
-    const usdtBalance = await getOffchainUsdtBalance(ctx.userId);
+    const wallet = await getOffchainWalletSummary(ctx.userId);
 
     return {
       asset: "USDT" as const,
-      usdtBalance,
-      usdcBalance: usdtBalance,
+      usdtBalance: wallet.availableUsdtBalance,
+      usdcBalance: wallet.availableUsdtBalance,
+      availableUsdtBalance: wallet.availableUsdtBalance,
+      lockedUsdtBalance: wallet.lockedUsdtBalance,
+      totalUsdtBalance: wallet.totalUsdtBalance,
       walletAddress,
     };
   }),
@@ -49,24 +67,45 @@ export const walletRouter = router({
     }),
 
   /**
-   * Quote GBP deposits into USDT.
+   * Quote fiat deposits into internal USDT.
    */
   quoteDeposit: protectedProcedure
-    .input(z.object({ amountGbp: z.number().min(10).max(10000) }))
+    .input(depositInput)
     .query(async ({ input }) => {
-      return quoteGbpToUsdt(input.amountGbp);
+      return quoteFiatToUsdt(input.amount, input.currency);
     }),
 
   /**
-   * Credit a GBP deposit into the user's off-chain USDT balance.
-   * This records the ledger movement that later payment/KYC rails can gate.
+   * Create a Stripe PaymentIntent. The user's internal USDT balance is credited
+   * only after the signed Stripe webhook confirms successful payment.
    */
-  deposit: protectedProcedure
-    .input(z.object({ amountGbp: z.number().min(10).max(10000) }))
+  createDepositIntent: protectedProcedure
+    .input(depositInput)
     .mutation(async ({ ctx, input }) => {
+      if (!stripe) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Stripe is not configured for deposits",
+        });
+      }
+
       const { nanoid } = await import("nanoid");
       const txId = nanoid();
-      const quote = quoteGbpToUsdt(input.amountGbp);
+      const quote = quoteFiatToUsdt(input.amount, input.currency);
+      const currency = normalizeFiatCurrency(input.currency);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: toMinorUnits(quote.fiatAmount, currency),
+        currency: currency.toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          txId,
+          userId: ctx.userId,
+          fiatAmount: String(quote.fiatAmount),
+          fiatCurrency: quote.fiatCurrency,
+          usdtAmount: String(quote.usdtAmount),
+        },
+      });
 
       await TransactionEntity.create({
         txId,
@@ -77,13 +116,15 @@ export const walletRouter = router({
         fiatAmount: quote.fiatAmount,
         fiatCurrency: quote.fiatCurrency,
         exchangeRate: quote.exchangeRate,
-        status: "confirmed",
+        referenceId: paymentIntent.id,
+        status: "pending",
       }).go();
 
       return {
         txId,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
         ...quote,
-        balance: await getOffchainUsdtBalance(ctx.userId),
       };
     }),
 });
