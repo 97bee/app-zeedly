@@ -1355,6 +1355,33 @@ export default function ExplorePage() {
 
             <section>
               <SectionHeading
+                title="Tradable creators"
+                count={completedOfferings.length}
+                tone="completed"
+              />
+              {completedOfferings.length === 0 ? (
+                <EmptyState message="No tradable creators match this filter." />
+              ) : (
+                <>
+                  <div className="hidden lg:block">
+                    <TradableTable offerings={completedOfferings} />
+                  </div>
+                  <div className="space-y-3 lg:hidden">
+                    {completedOfferings.map((o) => (
+                      <CompactOfferingCard
+                        key={o.ipoId}
+                        offering={o}
+                        notified={false}
+                        onNotify={() => undefined}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section>
+              <SectionHeading
                 title="Live raises"
                 count={liveOfferings.length}
                 tone="live"
@@ -1381,33 +1408,6 @@ export default function ExplorePage() {
                     />
                   ))}
                 </div>
-              )}
-            </section>
-
-            <section>
-              <SectionHeading
-                title="Tradable creators"
-                count={completedOfferings.length}
-                tone="completed"
-              />
-              {completedOfferings.length === 0 ? (
-                <EmptyState message="No tradable creators match this filter." />
-              ) : (
-                <>
-                  <div className="hidden lg:block">
-                    <TradableTable offerings={completedOfferings} />
-                  </div>
-                  <div className="space-y-3 lg:hidden">
-                    {completedOfferings.map((o) => (
-                      <CompactOfferingCard
-                        key={o.ipoId}
-                        offering={o}
-                        notified={false}
-                        onNotify={() => undefined}
-                      />
-                    ))}
-                  </div>
-                </>
               )}
             </section>
 
