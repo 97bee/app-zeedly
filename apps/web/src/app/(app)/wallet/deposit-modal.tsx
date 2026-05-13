@@ -1,7 +1,12 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { CheckCircle2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -18,7 +23,9 @@ const stripePublishableKey = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const hasStripePublishableKey =
   /^pk_(test|live)_/.test(stripePublishableKey) &&
   !/REPLACE_ME|placeholder|your_|xxx|example/i.test(stripePublishableKey);
-const stripePromise = hasStripePublishableKey ? loadStripe(stripePublishableKey) : null;
+const stripePromise = hasStripePublishableKey
+  ? loadStripe(stripePublishableKey)
+  : null;
 
 const CURRENCIES = ["GBP", "USD", "EUR"] as const;
 const FALLBACK_RATES: Record<(typeof CURRENCIES)[number], number> = {
@@ -63,7 +70,10 @@ function StripeDepositForm({
     const submitResult = await elements.submit();
     if (submitResult.error) {
       setIsSubmitting(false);
-      onError(submitResult.error.message ?? "Stripe payment form could not be submitted");
+      onError(
+        submitResult.error.message ??
+          "Stripe payment form could not be submitted",
+      );
       return;
     }
 
@@ -95,9 +105,15 @@ function StripeDepositForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <PaymentElement
         onReady={() => setIsElementReady(true)}
-        onLoadError={(event) => onError(event.error.message ?? "Stripe payment form failed to load")}
+        onLoadError={(event) =>
+          onError(event.error.message ?? "Stripe payment form failed to load")
+        }
       />
-      <Button type="submit" disabled={!stripe || !elements || !isElementReady || isSubmitting} className="w-full">
+      <Button
+        type="submit"
+        disabled={!stripe || !elements || !isElementReady || isSubmitting}
+        className="w-full"
+      >
         {isSubmitting ? "Confirming..." : "Pay with Stripe"}
       </Button>
     </form>
@@ -109,7 +125,10 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
   const [currency, setCurrency] = useState<Currency>("GBP");
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [processing, setProcessing] = useState<{ amount: number; status: string } | null>(null);
+  const [processing, setProcessing] = useState<{
+    amount: number;
+    status: string;
+  } | null>(null);
   const amount = Number.parseFloat(amountStr) || 0;
   const createIntent = trpc.wallet.createDepositIntent.useMutation();
   const quote = trpc.wallet.quoteDeposit.useQuery(
@@ -131,7 +150,9 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
 
   async function handleCreateIntent() {
     if (!stripePromise) {
-      setError("Stripe publishable key is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your pk_test key.");
+      setError(
+        "Stripe publishable key is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your pk_test key.",
+      );
       return;
     }
     if (amount < 10) {
@@ -146,7 +167,8 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
     setError(null);
     try {
       const result = await createIntent.mutateAsync({ amount, currency });
-      if (!result.clientSecret) throw new Error("Stripe did not return a client secret");
+      if (!result.clientSecret)
+        throw new Error("Stripe did not return a client secret");
       setClientSecret(result.clientSecret);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Deposit failed");
@@ -169,7 +191,10 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
       <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-zinc-900">Deposit funds</h2>
-          <button onClick={handleClose} className="text-zinc-400 transition-colors hover:text-zinc-900">
+          <button
+            onClick={handleClose}
+            className="text-zinc-400 transition-colors hover:text-zinc-900"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -181,9 +206,12 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-zinc-900">Payment {processing.status}</p>
+                <p className="text-lg font-semibold text-zinc-900">
+                  Payment {processing.status}
+                </p>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {formatUsdt(processing.amount)} will be credited after Stripe confirms the payment webhook.
+                  {formatUsdt(processing.amount)} will be credited to your
+                  account shortly.
                 </p>
               </div>
               <Button onClick={handleClose} className="w-full">
@@ -196,12 +224,17 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                 <div className="flex justify-between">
                   <span className="text-zinc-500">You pay</span>
                   <span className="font-medium text-zinc-900">
-                    {formatFiat(displayQuote.fiatAmount, displayQuote.fiatCurrency)}
+                    {formatFiat(
+                      displayQuote.fiatAmount,
+                      displayQuote.fiatCurrency,
+                    )}
                   </span>
                 </div>
                 <div className="mt-2 flex justify-between">
                   <span className="text-zinc-500">Estimated credit</span>
-                  <span className="font-semibold text-emerald-600">{formatUsdt(displayQuote.usdtAmount)}</span>
+                  <span className="font-semibold text-emerald-600">
+                    {formatUsdt(displayQuote.usdtAmount)}
+                  </span>
                 </div>
               </div>
               <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -213,7 +246,11 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                   }}
                 />
               </Elements>
-              <Button variant="ghost" onClick={() => setClientSecret(null)} className="w-full">
+              <Button
+                variant="ghost"
+                onClick={() => setClientSecret(null)}
+                className="w-full"
+              >
                 Change amount
               </Button>
               {error && (
@@ -225,11 +262,15 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm text-zinc-500">Amount to deposit</label>
+                <label className="mb-1.5 block text-sm text-zinc-500">
+                  Amount to deposit
+                </label>
                 <div className="grid grid-cols-[92px_1fr] gap-2">
                   <select
                     value={currency}
-                    onChange={(event) => setCurrency(event.target.value as Currency)}
+                    onChange={(event) =>
+                      setCurrency(event.target.value as Currency)
+                    }
                     className="rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm font-medium text-zinc-900 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
                   >
                     {CURRENCIES.map((option) => (
@@ -248,7 +289,9 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                     className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
                   />
                 </div>
-                <p className="mt-1 text-xs text-zinc-400">Min {currency} 10 / Max {currency} 10,000</p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Min {currency} 10 / Max {currency} 10,000
+                </p>
               </div>
 
               <div className="grid grid-cols-4 gap-2">
@@ -267,19 +310,27 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">You pay</span>
                   <span className="font-medium text-zinc-900">
-                    {formatFiat(displayQuote.fiatAmount, displayQuote.fiatCurrency)}
+                    {formatFiat(
+                      displayQuote.fiatAmount,
+                      displayQuote.fiatCurrency,
+                    )}
                   </span>
                 </div>
                 <div className="mt-2 flex justify-between text-sm">
                   <span className="text-zinc-500">Converted at</span>
                   <span className="font-medium text-zinc-900">
-                    1 {displayQuote.fiatCurrency} = {displayQuote.exchangeRate.toFixed(2)} USDT
+                    1 {displayQuote.fiatCurrency} ={" "}
+                    {displayQuote.exchangeRate.toFixed(2)} USDT
                   </span>
                 </div>
                 <div className="mt-3 border-t border-zinc-200 pt-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-zinc-500">Credited balance</span>
-                    <span className="font-semibold text-emerald-600">{formatUsdt(displayQuote.usdtAmount)}</span>
+                    <span className="text-sm text-zinc-500">
+                      Credited balance
+                    </span>
+                    <span className="font-semibold text-emerald-600">
+                      {formatUsdt(displayQuote.usdtAmount)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -292,10 +343,14 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
 
               <Button
                 onClick={handleCreateIntent}
-                disabled={createIntent.isPending || amount < 10 || amount > 10000}
+                disabled={
+                  createIntent.isPending || amount < 10 || amount > 10000
+                }
                 className="w-full"
               >
-                {createIntent.isPending ? "Preparing Stripe..." : "Continue to Stripe"}
+                {createIntent.isPending
+                  ? "Preparing Stripe..."
+                  : "Continue to Stripe"}
               </Button>
             </div>
           )}

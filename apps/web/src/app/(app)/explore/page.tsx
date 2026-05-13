@@ -20,7 +20,6 @@ import {
   Code2,
   Dumbbell,
   Eye,
-  Flame,
   Gamepad2,
   Grid2X2,
   HeartPulse,
@@ -34,7 +33,6 @@ import {
   Utensils,
   Wallet,
   X,
-  Zap,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
@@ -211,24 +209,6 @@ function Avatar({
       }}
     >
       {creator?.name?.[0] ?? "?"}
-    </div>
-  );
-}
-
-function StatPill({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon?: LucideIcon;
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-[12px] backdrop-blur-md">
-      {Icon ? <Icon className="h-3.5 w-3.5 text-slate-400" /> : null}
-      <span className="text-slate-500">{label}</span>
-      <span className="font-black tabular-nums text-slate-950">{value}</span>
     </div>
   );
 }
@@ -1006,8 +986,6 @@ export default function ExplorePage() {
   const featuredCreator = featuredOffering?.creator ?? filteredCreators[0];
   const isLoading = isLoadingCreators || isLoadingOfferings;
 
-  const totalRaised = allOfferings.reduce((s, o) => s + (o.raisedUsd ?? 0), 0);
-
   return (
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[440px] overflow-hidden">
@@ -1063,25 +1041,6 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <h1 className="text-[40px] font-black leading-[1.02] tracking-[-0.07em] text-slate-950 sm:text-[56px]">
-                Invest in tomorrow&apos;s <br className="hidden sm:block" />
-                <span className="bg-gradient-to-r from-slate-950 via-slate-700 to-slate-500 bg-clip-text text-transparent">
-                  creator economy.
-                </span>
-              </h1>
-              <p className="mt-3 max-w-xl text-[15px] leading-7 text-slate-500">
-                Back independent creators at their earliest stage, earn dividends from their work,
-                and trade their tokens onchain — without leaving USD.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <StatPill icon={Flame} label="Total raised" value={formatCurrency(totalRaised)} />
-              <StatPill icon={Users} label="Creators" value={String(allCreators.length)} />
-              <StatPill icon={Zap} label="Live" value={String(liveOfferings.length)} />
-            </div>
-          </div>
         </motion.header>
 
         <section>

@@ -1,20 +1,157 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRightLeft, DollarSign, Rocket, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowRightLeft,
+  ArrowUpRight,
+  CircleDollarSign,
+  Coins,
+  Compass,
+  DollarSign,
+  Lock,
+  Rocket,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-function formatUsdt(amount: number): string {
-  return `${new Intl.NumberFormat("en-US", {
+function formatUsdt(amount: number, signed = false): string {
+  const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Math.abs(amount))} USDT`;
+  }).format(Math.abs(amount));
+  const sign = signed ? (amount >= 0 ? "+" : "-") : "";
+  return `${sign}${formatted} USDT`;
 }
 
-function signedUsdt(amount: number): string {
-  return `${amount >= 0 ? "+" : "-"}${formatUsdt(amount)}`;
+function formatDate(ts: number | null | undefined) {
+  if (!ts) return "—";
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(ts));
+}
+
+function hashHue(input: string) {
+  let h = 0;
+  for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) | 0;
+  return Math.abs(h) % 360;
+}
+
+function CreatorAvatar({ name, size = 40 }: { name: string; size?: number }) {
+  const hue = hashHue(name);
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-2xl font-black text-white"
+      style={{
+        width: size,
+        height: size,
+        background: `linear-gradient(135deg, hsl(${hue} 50% 30%), hsl(${(hue + 60) % 360} 60% 22%))`,
+        fontSize: size * 0.42,
+      }}
+    >
+      {name[0]?.toUpperCase() ?? "?"}
+    </div>
+  );
+}
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  hint?: string;
+  accent?: "lime" | "amber" | "emerald";
+}) {
+  const ring =
+    accent === "lime"
+      ? "from-lime/30 to-lime/5"
+      : accent === "amber"
+        ? "from-amber-200/40 to-amber-50/0"
+        : accent === "emerald"
+          ? "from-emerald-200/40 to-emerald-50/0"
+          : "from-slate-200/60 to-slate-50/0";
+  return (
+    <div className="relative overflow-hidden rounded-[20px] border border-slate-200/70 bg-white p-5">
+      <div className={cn("pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl", ring)} />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+          <p className="mt-2 text-[24px] font-black tabular-nums tracking-[-0.04em] text-slate-950">
+            {value}
+          </p>
+          {hint ? <p className="mt-1 text-[11px] font-semibold text-slate-400">{hint}</p> : null}
+        </div>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  icon: Icon,
+  count,
+  trailing,
+  children,
+}: {
+  title: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  count?: number;
+  trailing?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div className="flex items-center gap-2.5">
+          {Icon ? (
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+              <Icon className="h-4 w-4" />
+            </span>
+          ) : null}
+          <h2 className="text-[17px] font-black tracking-[-0.03em] text-slate-950">{title}</h2>
+          {typeof count === "number" ? (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold tabular-nums text-slate-500">
+              {count}
+            </span>
+          ) : null}
+        </div>
+        {trailing}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function EmptyRow({ message, action }: { message: string; action?: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+      <p className="text-[13px] font-medium text-slate-400">{message}</p>
+      {action}
+    </div>
+  );
+}
+
+function offeringStatusLabel(state: string) {
+  if (state === "live") return "Live";
+  if (state === "completed") return "Completed";
+  return "Coming soon";
+}
+
+function offeringStatusTone(state: string) {
+  if (state === "live") return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+  if (state === "completed") return "bg-slate-100 text-slate-600 border border-slate-200";
+  return "bg-amber-50 text-amber-700 border border-amber-100";
 }
 
 export default function PortfolioPage() {
@@ -25,14 +162,14 @@ export default function PortfolioPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-zinc-100" />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-zinc-100" />
+      <div className="space-y-6">
+        <div className="h-36 animate-pulse rounded-[24px] bg-slate-100" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 animate-pulse rounded-[20px] bg-slate-100" />
           ))}
         </div>
-        <div className="h-64 animate-pulse rounded-2xl bg-zinc-100" />
+        <div className="h-64 animate-pulse rounded-[22px] bg-slate-100" />
       </div>
     );
   }
@@ -41,241 +178,361 @@ export default function PortfolioPage() {
   const lockedUsdt = portfolio?.lockedUsdtBalance ?? 0;
   const holdings = portfolio?.holdings ?? [];
   const offerings = portfolio?.offerings ?? [];
-  const totalHoldingsValue = holdings.reduce((sum, holding) => sum + holding.currentValue, 0);
-  const totalValue = portfolio?.totalPortfolioValue ?? 0;
-  const totalGainLoss = holdings.reduce((sum, holding) => sum + holding.gainLoss, 0);
+  const totalHoldingsValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
+  const totalValue = portfolio?.totalPortfolioValue ?? usdtBalance + lockedUsdt + totalHoldingsValue;
+  const totalGainLoss = holdings.reduce((sum, h) => sum + h.gainLoss, 0);
+  const totalCostBasis = totalHoldingsValue - totalGainLoss;
+  const totalGainPct =
+    totalCostBasis > 0 ? (totalGainLoss / totalCostBasis) * 100 : 0;
+  const gainPositive = totalGainLoss >= 0;
 
   return (
-    <div>
-      <motion.h1
-        className="mb-8 text-3xl font-bold font-serif text-zinc-900"
-        initial={{ opacity: 0, y: 12 }}
+    <div className="relative space-y-7 pb-12">
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px] overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(60%_60%_at_50%_0%,rgba(212,236,44,0.10),transparent_70%)]" />
+        <div className="absolute -top-10 right-1/4 h-60 w-60 rounded-full bg-emerald-300/[0.08] blur-3xl" />
+      </div>
+
+      <motion.section
+        className="relative overflow-hidden rounded-[28px] border border-slate-900/5 bg-slate-950 p-6 text-white shadow-[0_28px_64px_-24px_rgba(15,23,42,0.4)] sm:p-8"
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        Portfolio
-      </motion.h1>
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-lime/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-white/50">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-lime" />
+              Portfolio
+            </p>
+            <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1 className="text-[44px] font-black leading-none tracking-[-0.05em] sm:text-[56px]">
+                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalValue)}
+              </h1>
+              <span className="text-[18px] font-bold text-white/55">USDT</span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-black tabular-nums",
+                  gainPositive
+                    ? "bg-emerald-400/15 text-emerald-300"
+                    : "bg-red-400/15 text-red-300",
+                )}
+              >
+                {gainPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {formatUsdt(totalGainLoss, true)}
+                {totalCostBasis > 0 ? (
+                  <span className="opacity-80">({gainPositive ? "+" : ""}{totalGainPct.toFixed(2)}%)</span>
+                ) : null}
+              </span>
+              <span className="text-white/45">on holdings · all-time</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/15 bg-white/[0.06] text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/wallet">
+                <Wallet className="h-4 w-4" />
+                Deposit
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="bg-lime text-slate-950 shadow-[0_12px_30px_rgba(212,236,44,0.32)] hover:bg-lime-dark hover:text-slate-950"
+            >
+              <Link href="/explore">
+                <Compass className="h-4 w-4" />
+                Discover creators
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </motion.section>
 
       <motion.div
-        className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-6"
-        initial={{ opacity: 0, y: 16 }}
+        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
       >
-        {[
-          { label: "Total Value", value: formatUsdt(totalValue) },
-          { label: "USDT Balance", value: formatUsdt(usdtBalance) },
-          { label: "Locked USDT", value: formatUsdt(lockedUsdt) },
-          { label: "Holdings Value", value: formatUsdt(totalHoldingsValue) },
-          { label: "Offerings Entered", value: offerings.length.toLocaleString() },
-        ].map((card) => (
-          <div key={card.label} className="rounded-2xl border border-zinc-200 bg-white p-5">
-            <p className="text-sm text-zinc-400">{card.label}</p>
-            <p className="mt-1 text-2xl font-bold text-zinc-900">{card.value}</p>
-          </div>
-        ))}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <p className="text-sm text-zinc-400">Total Gain/Loss</p>
-          <p className={`mt-1 flex items-center gap-1 text-2xl font-bold ${totalGainLoss >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-            {totalGainLoss >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-            {signedUsdt(totalGainLoss)}
-          </p>
-        </div>
+        <StatTile
+          icon={CircleDollarSign}
+          label="Available"
+          value={formatUsdt(usdtBalance)}
+          hint="Ready to invest"
+          accent="lime"
+        />
+        <StatTile
+          icon={Lock}
+          label="Locked"
+          value={formatUsdt(lockedUsdt)}
+          hint="Pledged to active raises"
+          accent="amber"
+        />
+        <StatTile
+          icon={Coins}
+          label="Holdings value"
+          value={formatUsdt(totalHoldingsValue)}
+          hint={`${holdings.length} ${holdings.length === 1 ? "token" : "tokens"}`}
+        />
+        <StatTile
+          icon={Rocket}
+          label="Offerings entered"
+          value={offerings.length.toLocaleString()}
+          hint={`${offerings.filter((o) => o.canClaim).length} claimable`}
+          accent="emerald"
+        />
       </motion.div>
 
       <motion.div
-        className="rounded-2xl border border-zinc-200 bg-white"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="border-b border-zinc-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Holdings</h2>
-        </div>
-        {holdings.length === 0 ? (
-          <div className="px-6 py-12 text-center text-zinc-400">
-            No token holdings yet. Completed offering allocations will appear here.
-          </div>
-        ) : (
-          <div className="divide-y divide-zinc-50">
-            {holdings.map((holding) => {
-              const isPositive = holding.gainLoss >= 0;
-              return (
-                <a
-                  key={holding.creatorId}
-                  href={`/creator/${holding.creatorSlug}`}
-                  className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-zinc-50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime/30 font-bold text-zinc-900">
-                      {holding.creatorName[0]}
+        <SectionCard title="Holdings" count={holdings.length}>
+          {holdings.length === 0 ? (
+            <EmptyRow
+              message="No token holdings yet. Allocations from completed raises appear here."
+              action={
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/explore">
+                    Browse raises <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              }
+            />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {holdings.map((holding) => {
+                const isPositive = holding.gainLoss >= 0;
+                return (
+                  <Link
+                    key={holding.creatorId}
+                    href={`/creator/${holding.creatorSlug}`}
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50/70 sm:px-6"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <CreatorAvatar name={holding.creatorName} />
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+                          {holding.creatorName}
+                        </p>
+                        <p className="mt-0.5 truncate text-[12px] text-slate-500">
+                          {holding.quantity.toFixed(4)} tokens · avg {formatUsdt(holding.avgCostBasis)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-zinc-900">{holding.creatorName}</p>
-                      <p className="text-sm text-zinc-400">
-                        {holding.quantity.toFixed(4)} tokens @ {formatUsdt(holding.avgCostBasis)}
+                    <div className="text-right">
+                      <p className="text-[14px] font-black tabular-nums text-slate-950">
+                        {formatUsdt(holding.currentValue)}
+                      </p>
+                      <p
+                        className={cn(
+                          "mt-0.5 flex items-center justify-end gap-1 text-[12px] font-bold tabular-nums",
+                          isPositive ? "text-emerald-600" : "text-red-500",
+                        )}
+                      >
+                        {isPositive ? (
+                          <ArrowUpRight className="h-3 w-3" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3" />
+                        )}
+                        {formatUsdt(holding.gainLoss, true)}
+                        <span className="text-slate-400">({holding.gainLossPercent.toFixed(1)}%)</span>
                       </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-zinc-900">{formatUsdt(holding.currentValue)}</p>
-                    <p className={`flex items-center justify-end gap-1 text-sm ${isPositive ? "text-emerald-600" : "text-red-500"}`}>
-                      {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {signedUsdt(holding.gainLoss)} ({holding.gainLossPercent.toFixed(1)}%)
-                    </p>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
-        )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </SectionCard>
       </motion.div>
 
       <motion.div
-        className="mt-6 rounded-2xl border border-zinc-200 bg-white"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.12 }}
       >
-        <div className="border-b border-zinc-100 px-6 py-4">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
-            <Rocket className="h-5 w-5 text-zinc-400" />
-            Offerings Entered
-          </h2>
-        </div>
-        {offerings.length === 0 ? (
-          <div className="px-6 py-12 text-center text-zinc-400">No offering entries yet</div>
-        ) : (
-          <div className="divide-y divide-zinc-50">
-            {offerings.map((entry) => (
-              <div
-                key={entry.purchaseId}
-                className="flex items-center justify-between gap-4 px-6 py-4"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    {entry.creatorSlug ? (
-                      <Link href={`/creator/${entry.creatorSlug}`} className="font-medium text-zinc-900 hover:underline">
-                        {entry.creatorName}
-                      </Link>
-                    ) : (
-                      <p className="font-medium text-zinc-900">{entry.creatorName}</p>
-                    )}
-                    <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-500">
-                      {entry.state === "live" ? "Live" : entry.state === "completed" ? "Completed" : "Coming soon"}
-                    </span>
+        <SectionCard title="Offerings entered" icon={Rocket} count={offerings.length}>
+          {offerings.length === 0 ? (
+            <EmptyRow message="No offering entries yet." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {offerings.map((entry) => (
+                <div
+                  key={entry.purchaseId}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <CreatorAvatar name={entry.creatorName} size={36} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {entry.creatorSlug ? (
+                          <Link
+                            href={`/creator/${entry.creatorSlug}`}
+                            className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 hover:underline"
+                          >
+                            {entry.creatorName}
+                          </Link>
+                        ) : (
+                          <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+                            {entry.creatorName}
+                          </p>
+                        )}
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em]",
+                            offeringStatusTone(entry.state),
+                          )}
+                        >
+                          {offeringStatusLabel(entry.state)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-[12px] text-slate-500">
+                        {entry.quantity.toLocaleString()} tokens · {entry.claimStatus}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {entry.quantity.toLocaleString()} tokens / {entry.claimStatus}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-[14px] font-black tabular-nums text-slate-950">
+                        {formatUsdt(entry.usdtAmount)}
+                      </p>
+                      <p className="text-[11px] text-slate-400">{formatDate(entry.createdAt)}</p>
+                    </div>
+                    {entry.canClaim ? (
+                      <Button
+                        size="sm"
+                        onClick={() => claim.mutate({ purchaseId: entry.purchaseId })}
+                        disabled={claim.isPending}
+                      >
+                        {claim.isPending ? "Claiming..." : "Claim"}
+                      </Button>
+                    ) : entry.kycRequiredBeforeClaim ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link href="/settings">KYC</Link>
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="font-medium text-zinc-900">{formatUsdt(entry.usdtAmount)}</p>
-                    <p className="text-xs text-zinc-400">
-                      {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : ""}
-                    </p>
-                  </div>
-                  {entry.canClaim ? (
-                    <Button
-                      size="sm"
-                      onClick={() => claim.mutate({ purchaseId: entry.purchaseId })}
-                      disabled={claim.isPending}
+              ))}
+            </div>
+          )}
+        </SectionCard>
+      </motion.div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+        >
+          <SectionCard title="Trade history" icon={ArrowRightLeft} count={trades?.length ?? 0}>
+            {!trades?.length ? (
+              <EmptyRow message="No trades yet." />
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {trades.map((trade) => {
+                  const isBuy = trade.side === "buy";
+                  return (
+                    <div
+                      key={trade.tradeId}
+                      className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6"
                     >
-                      {claim.isPending ? "Claiming..." : "Claim"}
-                    </Button>
-                  ) : entry.kycRequiredBeforeClaim ? (
-                    <Button asChild size="sm" variant="outline">
-                      <Link href="/settings">KYC</Link>
-                    </Button>
-                  ) : null}
-                </div>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[11px] font-black uppercase",
+                            isBuy
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-red-50 text-red-600",
+                          )}
+                        >
+                          {isBuy ? (
+                            <ArrowDownRight className="h-4 w-4" />
+                          ) : (
+                            <ArrowUpRight className="h-4 w-4" />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-black tracking-[-0.02em] text-slate-950">
+                            {trade.creatorName}
+                          </p>
+                          <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                            {isBuy ? "Buy" : "Sell"} · {trade.quantity.toFixed(4)} @ {formatUsdt(trade.price)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={cn(
+                            "text-[13px] font-black tabular-nums",
+                            isBuy ? "text-red-500" : "text-emerald-600",
+                          )}
+                        >
+                          {isBuy ? "-" : "+"}
+                          {formatUsdt(trade.usdAmount)}
+                        </p>
+                        <p className="text-[11px] text-slate-400">{formatDate(trade.createdAt)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
+            )}
+          </SectionCard>
+        </motion.div>
 
-      <motion.div
-        className="mt-6 rounded-2xl border border-zinc-200 bg-white"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
-      >
-        <div className="border-b border-zinc-100 px-6 py-4">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
-            <ArrowRightLeft className="h-5 w-5 text-zinc-400" />
-            Trade History
-          </h2>
-        </div>
-        {!trades?.length ? (
-          <div className="px-6 py-12 text-center text-zinc-400">No trades yet</div>
-        ) : (
-          <div className="divide-y divide-zinc-50">
-            {trades.map((trade) => (
-              <div key={trade.tradeId} className="flex items-center justify-between px-6 py-3">
-                <div className="flex items-center gap-3">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    trade.side === "buy" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
-                  }`}>
-                    {trade.side.toUpperCase()}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-zinc-900">{trade.creatorName}</p>
-                    <p className="text-xs text-zinc-400">
-                      {trade.quantity.toFixed(4)} tokens @ {formatUsdt(trade.price)}
-                    </p>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.18 }}
+        >
+          <SectionCard title="Dividends" icon={DollarSign} count={dividends?.length ?? 0}>
+            {!dividends?.length ? (
+              <EmptyRow message="No dividends received yet." />
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {dividends.map((dividend) => (
+                  <div
+                    key={dividend.paymentId}
+                    className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-lime/20 text-slate-950">
+                        <DollarSign className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[13px] font-black tracking-[-0.02em] text-slate-950">
+                          Dividend payment
+                        </p>
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                          {dividend.tokenBalanceAtSnapshot.toFixed(4)} tokens at snapshot
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[13px] font-black tabular-nums text-emerald-600">
+                        +{formatUsdt(dividend.usdcAmount)}
+                      </p>
+                      <p className="text-[11px] text-slate-400">{formatDate(dividend.createdAt)}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className={`text-sm font-medium ${trade.side === "buy" ? "text-red-500" : "text-emerald-600"}`}>
-                    {trade.side === "buy" ? "-" : "+"}{formatUsdt(trade.usdAmount)}
-                  </p>
-                  <p className="text-xs text-zinc-400">
-                    {new Date(trade.createdAt ?? 0).toLocaleDateString()}
-                  </p>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
-
-      <motion.div
-        className="mt-6 rounded-2xl border border-zinc-200 bg-white"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
-        <div className="border-b border-zinc-100 px-6 py-4">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
-            <DollarSign className="h-5 w-5 text-zinc-400" />
-            Dividend History
-          </h2>
-        </div>
-        {!dividends?.length ? (
-          <div className="px-6 py-12 text-center text-zinc-400">No dividends received yet</div>
-        ) : (
-          <div className="divide-y divide-zinc-50">
-            {dividends.map((dividend) => (
-              <div key={dividend.paymentId} className="flex items-center justify-between px-6 py-3">
-                <div>
-                  <p className="text-sm font-medium text-zinc-900">Dividend Payment</p>
-                  <p className="text-xs text-zinc-400">
-                    {dividend.tokenBalanceAtSnapshot.toFixed(4)} tokens at snapshot
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-emerald-600">+{formatUsdt(dividend.usdcAmount)}</p>
-                  <p className="text-xs text-zinc-400">
-                    {new Date(dividend.createdAt ?? 0).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
+            )}
+          </SectionCard>
+        </motion.div>
+      </div>
     </div>
   );
 }
