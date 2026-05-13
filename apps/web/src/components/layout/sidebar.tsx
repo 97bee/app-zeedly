@@ -14,6 +14,7 @@ import {
   PenLine,
   Menu,
   X,
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
@@ -35,30 +36,56 @@ const sections = [
   { label: "Creator", items: [...CreatorItems, ...AdminItems] },
 ];
 
+const COLLAPSED_KEY = "zeedly:sidebar-collapsed";
+
 function SidebarBody({
   onNavigate,
   onLogout,
   email,
   pathname,
+  collapsed,
 }: {
   onNavigate?: () => void;
   onLogout: () => void;
   email: string | null;
   pathname: string;
+  collapsed: boolean;
 }) {
   return (
     <>
-      <Link href="/" onClick={onNavigate} className="mb-7 flex items-center gap-2.5 px-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-600 text-sm font-black tracking-[-0.08em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+      <Link
+        href="/"
+        onClick={onNavigate}
+        className={cn(
+          "mb-7 flex items-center gap-2.5 px-2 transition-all",
+          collapsed && "justify-center px-0",
+        )}
+        title="zeedly"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-600 text-sm font-black tracking-[-0.08em] text-white shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
           z
         </span>
-        <span className="text-lg font-black tracking-[-0.06em] text-white">zeedly</span>
+        <span
+          className={cn(
+            "overflow-hidden whitespace-nowrap text-lg font-black tracking-[-0.06em] text-white transition-all duration-200",
+            collapsed ? "w-0 opacity-0" : "w-auto opacity-100",
+          )}
+        >
+          zeedly
+        </span>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-5">
         {sections.map((section) => (
           <div key={section.label}>
-            <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/25">
+            <p
+              className={cn(
+                "px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/25 transition-all",
+                collapsed
+                  ? "m-0 h-0 overflow-hidden p-0 opacity-0"
+                  : "mb-1.5 h-auto opacity-100",
+              )}
+            >
               {section.label}
             </p>
             <div className="space-y-0.5">
@@ -69,15 +96,29 @@ function SidebarBody({
                     key={item.href}
                     href={item.href}
                     onClick={onNavigate}
+                    title={collapsed ? item.label : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-[13px] font-semibold transition-all",
+                      "flex items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-xl text-[13px] font-semibold transition-all",
+                      collapsed ? "justify-center px-0 py-2.5" : "px-2.5 py-2.5",
                       isActive
                         ? "bg-white/[0.08] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                         : "text-white/50 hover:bg-white/[0.05] hover:text-white/80",
                     )}
                   >
-                    <item.icon className={cn("h-[17px] w-[17px]", isActive ? "text-lime" : "text-white/40")} />
-                    {item.label}
+                    <item.icon
+                      className={cn(
+                        "h-[17px] w-[17px] shrink-0",
+                        isActive ? "text-lime" : "text-white/40",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "overflow-hidden transition-all duration-200",
+                        collapsed ? "w-0 opacity-0" : "w-auto opacity-100",
+                      )}
+                    >
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}
@@ -88,11 +129,22 @@ function SidebarBody({
 
       <div className="border-t border-white/10 pt-4">
         {email ? (
-          <div className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+          <div
+            className={cn(
+              "group flex items-center rounded-2xl border border-white/10 bg-white/[0.04] transition-all",
+              collapsed ? "flex-col gap-2 px-2 py-3" : "gap-3 px-3 py-3",
+            )}
+            title={collapsed ? email : undefined}
+          >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lime text-xs font-black text-slate-950">
               {email[0].toUpperCase()}
             </div>
-            <div className="min-w-0 flex-1">
+            <div
+              className={cn(
+                "min-w-0 flex-1 overflow-hidden transition-all duration-200",
+                collapsed ? "hidden" : "block",
+              )}
+            >
               <p className="truncate text-[12px] font-semibold text-white/90">{email}</p>
               <p className="text-[11px] text-white/30">Investor account</p>
             </div>
@@ -105,9 +157,21 @@ function SidebarBody({
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
-            <div className="h-8 w-8 rounded-full bg-white/10" />
-            <Link href="/login" onClick={onNavigate} className="text-sm font-semibold text-white/60 transition-colors hover:text-white">
+          <div
+            className={cn(
+              "flex items-center rounded-2xl border border-white/10 bg-white/[0.04]",
+              collapsed ? "justify-center px-2 py-3" : "gap-3 px-3 py-3",
+            )}
+          >
+            <div className="h-8 w-8 shrink-0 rounded-full bg-white/10" />
+            <Link
+              href="/login"
+              onClick={onNavigate}
+              className={cn(
+                "text-sm font-semibold text-white/60 transition-colors hover:text-white",
+                collapsed && "hidden",
+              )}
+            >
               Sign in
             </Link>
           </div>
@@ -122,6 +186,24 @@ export function Sidebar() {
   const router = useRouter();
   const { email, clearAuth } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(COLLAPSED_KEY);
+      if (stored === "1") setCollapsed(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -163,8 +245,31 @@ export function Sidebar() {
       </header>
 
       {/* desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-[220px] shrink-0 flex-col border-r border-white/5 bg-[#0d0f14] px-3 py-5 lg:flex">
-        <SidebarBody email={email} pathname={pathname} onLogout={handleLogout} />
+      <aside
+        className={cn(
+          "sticky top-0 z-10 hidden h-screen shrink-0 flex-col border-r border-white/5 bg-[#0d0f14] py-5 transition-[width,padding] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] lg:flex",
+          collapsed ? "w-[68px] px-2" : "w-[220px] px-3",
+        )}
+      >
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="absolute right-[-14px] top-5 z-20 flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-white/10 bg-[#0d0f14] text-white/60 shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all hover:bg-white/10 hover:text-white"
+        >
+          <ChevronLeft
+            className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              collapsed && "rotate-180",
+            )}
+          />
+        </button>
+        <SidebarBody
+          email={email}
+          pathname={pathname}
+          onLogout={handleLogout}
+          collapsed={collapsed}
+        />
       </aside>
 
       {/* mobile drawer */}
@@ -197,6 +302,7 @@ export function Sidebar() {
                 pathname={pathname}
                 onLogout={handleLogout}
                 onNavigate={() => setMobileOpen(false)}
+                collapsed={false}
               />
             </motion.aside>
           </>

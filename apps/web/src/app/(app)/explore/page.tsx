@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import type { AppRouter } from "../../../../../api/src/trpc/router.js";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowDownRight,
   ArrowUpRight,
   Bell,
   Bot,
@@ -608,6 +609,137 @@ function LiveOfferingCard({
   );
 }
 
+function PriceCell({
+  creatorId,
+  basePrice,
+}: {
+  creatorId: string | undefined;
+  basePrice: number;
+}) {
+  const { data } = trpc.trade.price.useQuery(
+    { creatorId: creatorId ?? "" },
+    { enabled: !!creatorId, staleTime: 30_000, refetchOnWindowFocus: false },
+  );
+  const current = data?.price ?? basePrice;
+  const change = basePrice > 0 ? ((current - basePrice) / basePrice) * 100 : 0;
+  const positive = change >= 0;
+  return (
+    <>
+      <div className="text-right">
+        <p className="text-[13px] font-black tabular-nums text-slate-950">
+          {`$${current.toFixed(2)}`}
+        </p>
+        <p className="text-[11px] font-semibold text-slate-400 tabular-nums">
+          IPO ${basePrice.toFixed(2)}
+        </p>
+      </div>
+      <div
+        className={cn(
+          "flex items-center justify-end gap-1 text-[13px] font-black tabular-nums",
+          positive ? "text-emerald-600" : "text-red-500",
+        )}
+      >
+        {positive ? (
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        ) : (
+          <ArrowDownRight className="h-3.5 w-3.5" />
+        )}
+        {`${positive ? "+" : ""}${change.toFixed(1)}%`}
+      </div>
+    </>
+  );
+}
+
+function TradableTable({ offerings }: { offerings: Offering[] }) {
+  const cols =
+    "grid-cols-[minmax(220px,2.2fr)_minmax(90px,1fr)_minmax(110px,1.1fr)_minmax(120px,1.1fr)_minmax(110px,1fr)_minmax(110px,1fr)_72px]";
+  return (
+    <motion.div
+      className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
+      <div
+        className={cn(
+          "grid gap-4 border-b border-slate-100 bg-slate-50/60 px-6 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400",
+          cols,
+        )}
+      >
+        <span>Creator</span>
+        <span className="text-right">Followers</span>
+        <span className="text-right">Capital raised</span>
+        <span className="text-right">Token price</span>
+        <span className="text-right">Return</span>
+        <span className="text-right">Funded</span>
+        <span className="text-right">&nbsp;</span>
+      </div>
+      <div className="divide-y divide-slate-100">
+        {offerings.map((offering, index) => (
+          <TradableRow key={offering.ipoId} offering={offering} index={index} cols={cols} />
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function TradableRow({
+  offering,
+  index,
+  cols,
+}: {
+  offering: Offering;
+  index: number;
+  cols: string;
+}) {
+  const creator = offering.creator;
+  const raised = offering.raisedUsd ?? getRaiseTarget(offering);
+  const href = creator?.slug ? `/creator/${creator.slug}` : "/explore";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: index * 0.03 }}
+    >
+      <Link
+        href={href}
+        className={cn(
+          "group grid items-center gap-4 px-6 py-3 transition-colors hover:bg-slate-50/70",
+          cols,
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200">
+            <Avatar creator={creator} size={40} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+              {creator?.name ?? "Unknown creator"}
+            </p>
+            <p className="truncate text-[11px] text-slate-500">
+              {creator?.category ?? "Creator"}
+              {creator?.genre ? ` · ${creator.genre}` : ""}
+            </p>
+          </div>
+        </div>
+        <span className="text-right text-[13px] font-black tabular-nums text-slate-950">
+          {formatNumber(creator?.subscriberCount ?? 0)}
+        </span>
+        <span className="text-right text-[13px] font-black tabular-nums text-slate-950">
+          {`$${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(raised)}`}
+        </span>
+        <PriceCell creatorId={creator?.creatorId} basePrice={offering.pricePerToken} />
+        <span className="text-right text-[12px] font-semibold tabular-nums text-slate-500">
+          {formatDate(offering.endsAt)}
+        </span>
+        <span className="flex h-8 w-8 items-center justify-center justify-self-end rounded-full border border-slate-200 bg-white text-slate-400 transition-colors group-hover:border-slate-950 group-hover:bg-slate-950 group-hover:text-white">
+          <ArrowUpRight className="h-4 w-4" />
+        </span>
+      </Link>
+    </motion.div>
+  );
+}
+
 function CompactOfferingCard({
   offering,
   notified,
@@ -1038,8 +1170,8 @@ function SectionHeading({
           </span>
         ) : null}
         {tone === "completed" ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-slate-100 bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-slate-600">
-            <CheckCircle2 className="h-3 w-3" /> Closed
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">
+            <CheckCircle2 className="h-3 w-3" /> Open to trade
           </span>
         ) : null}
       </div>
@@ -1242,60 +1374,61 @@ export default function ExplorePage() {
               )}
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-2">
-              <div>
-                <SectionHeading
-                  title="Opening soon"
-                  count={upcomingOfferings.length}
-                  tone="upcoming"
-                />
-                <div className="space-y-3">
-                  {upcomingOfferings.length ? (
-                    upcomingOfferings.map((o) => (
-                      <CompactOfferingCard
-                        key={o.ipoId}
-                        offering={o}
-                        notified={notified.has(o.ipoId)}
-                        onNotify={() =>
-                          setNotified((cur) => {
-                            const next = new Set(cur);
-                            next.add(o.ipoId);
-                            return next;
-                          })
-                        }
-                      />
-                    ))
-                  ) : (
-                    <EmptyState
-                      message="No upcoming raises match this filter."
-                      compact
-                    />
-                  )}
-                </div>
-              </div>
-              <div>
-                <SectionHeading
-                  title="Recently funded"
-                  count={completedOfferings.length}
-                  tone="completed"
-                />
-                <div className="space-y-3">
-                  {completedOfferings.length ? (
-                    completedOfferings.map((o) => (
+            <section>
+              <SectionHeading
+                title="Tradable creators"
+                count={completedOfferings.length}
+                tone="completed"
+              />
+              {completedOfferings.length === 0 ? (
+                <EmptyState message="No tradable creators match this filter." />
+              ) : (
+                <>
+                  <div className="hidden lg:block">
+                    <TradableTable offerings={completedOfferings} />
+                  </div>
+                  <div className="space-y-3 lg:hidden">
+                    {completedOfferings.map((o) => (
                       <CompactOfferingCard
                         key={o.ipoId}
                         offering={o}
                         notified={false}
                         onNotify={() => undefined}
                       />
-                    ))
-                  ) : (
-                    <EmptyState
-                      message="No completed raises match this filter."
-                      compact
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section>
+              <SectionHeading
+                title="Opening soon"
+                count={upcomingOfferings.length}
+                tone="upcoming"
+              />
+              <div className="grid gap-3 xl:grid-cols-2">
+                {upcomingOfferings.length ? (
+                  upcomingOfferings.map((o) => (
+                    <CompactOfferingCard
+                      key={o.ipoId}
+                      offering={o}
+                      notified={notified.has(o.ipoId)}
+                      onNotify={() =>
+                        setNotified((cur) => {
+                          const next = new Set(cur);
+                          next.add(o.ipoId);
+                          return next;
+                        })
+                      }
                     />
-                  )}
-                </div>
+                  ))
+                ) : (
+                  <EmptyState
+                    message="No upcoming raises match this filter."
+                    compact
+                  />
+                )}
               </div>
             </section>
 
