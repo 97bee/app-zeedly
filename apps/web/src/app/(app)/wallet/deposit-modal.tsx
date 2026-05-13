@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -8,10 +8,14 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, Loader2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { env } from "@/lib/env";
+
+const CREDIT_POLL_INTERVAL_MS = 2000;
+const CREDIT_TIMEOUT_MS = 60_000;
+const CREDIT_TOLERANCE_USDT = 0.01;
 
 interface Props {
   open: boolean;
@@ -120,21 +124,80 @@ function StripeDepositForm({
   );
 }
 
+type CreditingState = {
+  expectedUsdt: number;
+  baseline: number;
+  startedAt: number;
+};
+
+type FinalState = {
+  amount: number;
+  status: "credited" | "processing";
+};
+
 export function DepositModal({ open, onClose, onSuccess }: Props) {
   const [amountStr, setAmountStr] = useState("100");
   const [currency, setCurrency] = useState<Currency>("GBP");
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [processing, setProcessing] = useState<{
-    amount: number;
-    status: string;
-  } | null>(null);
+  const [crediting, setCrediting] = useState<CreditingState | null>(null);
+  const [processing, setProcessing] = useState<FinalState | null>(null);
+  const baselineRef = useRef<number | null>(null);
   const amount = Number.parseFloat(amountStr) || 0;
   const createIntent = trpc.wallet.createDepositIntent.useMutation();
   const quote = trpc.wallet.quoteDeposit.useQuery(
     { amount, currency },
     { enabled: open && amount >= 10 && amount <= 10000 },
   );
+
+  // Pre-load balance so we have a baseline to compare against once the
+  // Stripe webhook credits the user's wallet. While crediting, poll on
+  // an interval so the cached balance (shared with the wallet page) stays
+  // fresh.
+  const balanceQuery = trpc.wallet.balance.useQuery(undefined, {
+    enabled: open,
+    refetchInterval: crediting ? CREDIT_POLL_INTERVAL_MS : false,
+    refetchIntervalInBackground: true,
+  });
+
+  // Capture baseline on first successful balance read after the modal opens.
+  useEffect(() => {
+    if (!open) {
+      baselineRef.current = null;
+      return;
+    }
+    if (baselineRef.current === null && balanceQuery.data) {
+      baselineRef.current = balanceQuery.data.availableUsdtBalance ?? 0;
+    }
+  }, [open, balanceQuery.data]);
+
+  // Detect that the deposit has landed.
+  useEffect(() => {
+    if (!crediting) return;
+    const latest = balanceQuery.data?.availableUsdtBalance ?? null;
+    if (latest === null) return;
+    if (latest + CREDIT_TOLERANCE_USDT >= crediting.baseline + crediting.expectedUsdt) {
+      setProcessing({ amount: crediting.expectedUsdt, status: "credited" });
+      setCrediting(null);
+      onSuccess();
+    }
+  }, [balanceQuery.data, crediting, onSuccess]);
+
+  // Time out gracefully if the webhook is slow — show a "still processing"
+  // message rather than spinning forever.
+  useEffect(() => {
+    if (!crediting) return;
+    const remaining = Math.max(
+      0,
+      CREDIT_TIMEOUT_MS - (Date.now() - crediting.startedAt),
+    );
+    const timer = setTimeout(() => {
+      setProcessing({ amount: crediting.expectedUsdt, status: "processing" });
+      setCrediting(null);
+      onSuccess();
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [crediting, onSuccess]);
 
   const displayQuote = useMemo(() => {
     if (quote.data) return quote.data;
@@ -181,6 +244,8 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
     setError(null);
     setClientSecret(null);
     setProcessing(null);
+    setCrediting(null);
+    baselineRef.current = null;
     onClose();
   }
 
@@ -200,18 +265,45 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
         </div>
 
         <div className="p-6">
-          {processing ? (
+          {crediting ? (
             <div className="space-y-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-50 text-zinc-600">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-zinc-900">
+                  Crediting your wallet…
+                </p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Payment confirmed. Waiting for {formatUsdt(crediting.expectedUsdt)} to
+                  arrive in your balance.
+                </p>
+              </div>
+              <Button variant="ghost" onClick={handleClose} className="w-full">
+                Close
+              </Button>
+            </div>
+          ) : processing ? (
+            <div className="space-y-5 text-center">
+              <div
+                className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
+                  processing.status === "credited"
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-amber-50 text-amber-600"
+                }`}
+              >
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-lg font-semibold text-zinc-900">
-                  Payment {processing.status}
+                  {processing.status === "credited"
+                    ? "Deposit credited"
+                    : "Deposit processing"}
                 </p>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {formatUsdt(processing.amount)} will be credited to your
-                  account shortly.
+                  {processing.status === "credited"
+                    ? `${formatUsdt(processing.amount)} is now available in your wallet.`
+                    : `${formatUsdt(processing.amount)} is on its way — this can take a minute. Refresh shortly to see it land.`}
                 </p>
               </div>
               <Button onClick={handleClose} className="w-full">
@@ -240,9 +332,16 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <StripeDepositForm
                   onError={setError}
-                  onProcessing={(status) => {
-                    setProcessing({ amount: displayQuote.usdtAmount, status });
-                    onSuccess();
+                  onProcessing={() => {
+                    const baseline =
+                      balanceQuery.data?.availableUsdtBalance ??
+                      baselineRef.current ??
+                      0;
+                    setCrediting({
+                      expectedUsdt: displayQuote.usdtAmount,
+                      baseline,
+                      startedAt: Date.now(),
+                    });
                   }}
                 />
               </Elements>
