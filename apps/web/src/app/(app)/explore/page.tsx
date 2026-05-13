@@ -621,30 +621,40 @@ function PriceCell({
     { enabled: !!creatorId, staleTime: 30_000, refetchOnWindowFocus: false },
   );
   const current = data?.price ?? basePrice;
-  const change = basePrice > 0 ? ((current - basePrice) / basePrice) * 100 : 0;
-  const positive = change >= 0;
+  const change24hPct = data?.change24hPct ?? null;
+  const hasChange = change24hPct !== null && Number.isFinite(change24hPct);
+  const positive = (change24hPct ?? 0) >= 0;
   return (
     <>
       <div className="text-right">
-        <p className="text-[13px] font-black tabular-nums text-slate-950">
+        <p className="text-[15px] font-black tabular-nums tracking-[-0.01em] text-slate-950">
           {`$${current.toFixed(2)}`}
-        </p>
-        <p className="text-[11px] font-semibold text-slate-400 tabular-nums">
-          IPO ${basePrice.toFixed(2)}
         </p>
       </div>
       <div
         className={cn(
           "flex items-center justify-end gap-1 text-[13px] font-black tabular-nums",
-          positive ? "text-emerald-600" : "text-red-500",
+          hasChange
+            ? positive
+              ? "text-emerald-600"
+              : "text-red-500"
+            : "text-slate-300",
         )}
       >
-        {positive ? (
-          <ArrowUpRight className="h-3.5 w-3.5" />
+        {hasChange ? (
+          <>
+            {positive ? (
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            ) : (
+              <ArrowDownRight className="h-3.5 w-3.5" />
+            )}
+            {`${positive ? "+" : ""}${(change24hPct ?? 0).toFixed(2)}%`}
+          </>
         ) : (
-          <ArrowDownRight className="h-3.5 w-3.5" />
+          <span className="text-slate-400" title="Not enough 24h price history yet">
+            —
+          </span>
         )}
-        {`${positive ? "+" : ""}${change.toFixed(1)}%`}
       </div>
     </>
   );
@@ -669,8 +679,8 @@ function TradableTable({ offerings }: { offerings: Offering[] }) {
         <span>Creator</span>
         <span className="text-right">Followers</span>
         <span className="text-right">Capital raised</span>
-        <span className="text-right">Token price</span>
-        <span className="text-right">Return</span>
+        <span className="text-right">Price</span>
+        <span className="text-right">24h</span>
         <span className="text-right">Funded</span>
         <span className="text-right">&nbsp;</span>
       </div>

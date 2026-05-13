@@ -58,13 +58,36 @@ async function getConfirmedTokenPosition(userId: string, creatorId: string): Pro
 
 export const tradeRouter = router({
   /**
-   * Get the latest price for a creator token.
+   * Get the latest price for a creator token plus the 24h change.
+   *
+   * `change24h` / `change24hPct` are null when no traded price ≥ 24h old
+   * exists yet — the UI should treat this as "new listing" rather than
+   * displaying a misleading 0%.
    */
   price: publicProcedure
     .input(z.object({ creatorId: z.string() }))
     .query(async ({ input }) => {
       const price = await getLatestPrice(input.creatorId);
-      return { price };
+      if (price === null) {
+        return { price: null, change24h: null, change24hPct: null };
+      }
+
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      const reference = await PriceHistoryEntity.query
+        .byCreator({ creatorId: input.creatorId })
+        .lte({ timestamp: cutoff })
+        .go({ order: "desc", limit: 1 });
+
+      const refPrice = reference.data[0]?.price;
+      if (refPrice === undefined || refPrice <= 0) {
+        return { price, change24h: null, change24hPct: null };
+      }
+
+      return {
+        price,
+        change24h: price - refPrice,
+        change24hPct: ((price - refPrice) / refPrice) * 100,
+      };
     }),
 
   /**
