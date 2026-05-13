@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Home,
   Compass,
-  Wallet,
   PieChart,
   Settings,
   LogOut,
@@ -20,19 +20,21 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { getOpenfort } from "@/lib/openfort";
 
-const NavItems = [
+const OverviewItems = [{ href: "/home", label: "Home", icon: Home }];
+const MarketItems = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/portfolio", label: "Portfolio", icon: PieChart },
-  { href: "/wallet", label: "Wallet", icon: Wallet },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
-
-const CreatorItems = [{ href: "/creator/apply", label: "Apply as Creator", icon: PenLine }];
+const AccountItems = [{ href: "/settings", label: "Settings", icon: Settings }];
+const CreatorItems = [
+  { href: "/creator/apply", label: "Apply as Creator", icon: PenLine },
+];
 const AdminItems = [{ href: "/admin", label: "Admin", icon: ShieldCheck }];
 
 const sections = [
-  { label: "Market", items: NavItems.slice(0, 2) },
-  { label: "Account", items: NavItems.slice(2) },
+  { label: "Overview", items: OverviewItems },
+  { label: "Market", items: MarketItems },
+  { label: "Account", items: AccountItems },
   { label: "Creator", items: [...CreatorItems, ...AdminItems] },
 ];
 
@@ -90,7 +92,9 @@ function SidebarBody({
             </p>
             <div className="space-y-0.5">
               {section.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}
@@ -99,7 +103,9 @@ function SidebarBody({
                     title={collapsed ? item.label : undefined}
                     className={cn(
                       "flex items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-xl text-[13px] font-semibold transition-all",
-                      collapsed ? "justify-center px-0 py-2.5" : "px-2.5 py-2.5",
+                      collapsed
+                        ? "justify-center px-0 py-2.5"
+                        : "px-2.5 py-2.5",
                       isActive
                         ? "bg-white/[0.08] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                         : "text-white/50 hover:bg-white/[0.05] hover:text-white/80",
@@ -145,7 +151,9 @@ function SidebarBody({
                 collapsed ? "hidden" : "block",
               )}
             >
-              <p className="truncate text-[12px] font-semibold text-white/90">{email}</p>
+              <p className="truncate text-[12px] font-semibold text-white/90">
+                {email}
+              </p>
               <p className="text-[11px] text-white/30">Investor account</p>
             </div>
             <button
@@ -233,7 +241,9 @@ export function Sidebar() {
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-slate-900 to-slate-700 text-[12px] font-black tracking-[-0.08em] text-white">
             z
           </span>
-          <span className="text-[15px] font-black tracking-[-0.06em] text-slate-950">zeedly</span>
+          <span className="text-[15px] font-black tracking-[-0.06em] text-slate-950">
+            zeedly
+          </span>
         </Link>
         <button
           onClick={() => setMobileOpen(true)}

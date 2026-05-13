@@ -34,7 +34,9 @@ function formatUsdt(amount: number, signed = false): string {
 
 function formatDate(ts: number | null | undefined) {
   if (!ts) return "—";
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(ts));
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(
+    new Date(ts),
+  );
 }
 
 function hashHue(input: string) {
@@ -83,14 +85,25 @@ function StatTile({
           : "from-slate-200/60 to-slate-50/0";
   return (
     <div className="relative overflow-hidden rounded-[20px] border border-slate-200/70 bg-white p-5">
-      <div className={cn("pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl", ring)} />
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl",
+          ring,
+        )}
+      />
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            {label}
+          </p>
           <p className="mt-2 text-[24px] font-black tabular-nums tracking-[-0.04em] text-slate-950">
             {value}
           </p>
-          {hint ? <p className="mt-1 text-[11px] font-semibold text-slate-400">{hint}</p> : null}
+          {hint ? (
+            <p className="mt-1 text-[11px] font-semibold text-slate-400">
+              {hint}
+            </p>
+          ) : null}
         </div>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
           <Icon className="h-4 w-4" />
@@ -122,7 +135,9 @@ function SectionCard({
               <Icon className="h-4 w-4" />
             </span>
           ) : null}
-          <h2 className="text-[17px] font-black tracking-[-0.03em] text-slate-950">{title}</h2>
+          <h2 className="text-[17px] font-black tracking-[-0.03em] text-slate-950">
+            {title}
+          </h2>
           {typeof count === "number" ? (
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold tabular-nums text-slate-500">
               {count}
@@ -136,7 +151,13 @@ function SectionCard({
   );
 }
 
-function EmptyRow({ message, action }: { message: string; action?: React.ReactNode }) {
+function EmptyRow({
+  message,
+  action,
+}: {
+  message: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
       <p className="text-[13px] font-medium text-slate-400">{message}</p>
@@ -152,8 +173,10 @@ function offeringStatusLabel(state: string) {
 }
 
 function offeringStatusTone(state: string) {
-  if (state === "live") return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-  if (state === "completed") return "bg-slate-100 text-slate-600 border border-slate-200";
+  if (state === "live")
+    return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+  if (state === "completed")
+    return "bg-slate-100 text-slate-600 border border-slate-200";
   return "bg-amber-50 text-amber-700 border border-amber-100";
 }
 
@@ -169,7 +192,10 @@ export default function PortfolioPage() {
         <div className="h-36 animate-pulse rounded-[24px] bg-slate-100" />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-[20px] bg-slate-100" />
+            <div
+              key={i}
+              className="h-28 animate-pulse rounded-[20px] bg-slate-100"
+            />
           ))}
         </div>
         <div className="h-64 animate-pulse rounded-[22px] bg-slate-100" />
@@ -181,8 +207,13 @@ export default function PortfolioPage() {
   const lockedUsdt = portfolio?.lockedUsdtBalance ?? 0;
   const holdings = portfolio?.holdings ?? [];
   const offerings = portfolio?.offerings ?? [];
-  const totalHoldingsValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
-  const totalValue = portfolio?.totalPortfolioValue ?? usdtBalance + lockedUsdt + totalHoldingsValue;
+  const totalHoldingsValue = holdings.reduce(
+    (sum, h) => sum + h.currentValue,
+    0,
+  );
+  const totalValue =
+    portfolio?.totalPortfolioValue ??
+    usdtBalance + lockedUsdt + totalHoldingsValue;
   const totalGainLoss = holdings.reduce((sum, h) => sum + h.gainLoss, 0);
   const totalCostBasis = totalHoldingsValue - totalGainLoss;
   const totalGainPct =
@@ -213,7 +244,10 @@ export default function PortfolioPage() {
             </p>
             <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="text-[44px] font-black leading-none tracking-[-0.05em] sm:text-[56px]">
-                {new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalValue)}
+                {new Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(totalValue)}
               </h1>
               <span className="text-[18px] font-bold text-white/55">USDT</span>
             </div>
@@ -226,10 +260,17 @@ export default function PortfolioPage() {
                     : "bg-red-400/15 text-red-300",
                 )}
               >
-                {gainPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {gainPositive ? (
+                  <TrendingUp className="h-3.5 w-3.5" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5" />
+                )}
                 {formatUsdt(totalGainLoss, true)}
                 {totalCostBasis > 0 ? (
-                  <span className="opacity-80">({gainPositive ? "+" : ""}{totalGainPct.toFixed(2)}%)</span>
+                  <span className="opacity-80">
+                    ({gainPositive ? "+" : ""}
+                    {totalGainPct.toFixed(2)}%)
+                  </span>
                 ) : null}
               </span>
               <span className="text-white/45">on holdings · all-time</span>
@@ -242,7 +283,7 @@ export default function PortfolioPage() {
               variant="outline"
               className="border-white/15 bg-white/[0.06] text-white hover:bg-white/10 hover:text-white"
             >
-              <Link href="/wallet">
+              <Link href="/portfolio">
                 <Wallet className="h-4 w-4" />
                 Deposit
               </Link>
@@ -329,7 +370,8 @@ export default function PortfolioPage() {
                           {holding.creatorName}
                         </p>
                         <p className="mt-0.5 truncate text-[12px] text-slate-500">
-                          {holding.quantity.toFixed(4)} tokens · avg {formatUsdt(holding.avgCostBasis)}
+                          {holding.quantity.toFixed(4)} tokens · avg{" "}
+                          {formatUsdt(holding.avgCostBasis)}
                         </p>
                       </div>
                     </div>
@@ -349,7 +391,9 @@ export default function PortfolioPage() {
                           <ArrowDownRight className="h-3 w-3" />
                         )}
                         {formatUsdt(holding.gainLoss, true)}
-                        <span className="text-slate-400">({holding.gainLossPercent.toFixed(1)}%)</span>
+                        <span className="text-slate-400">
+                          ({holding.gainLossPercent.toFixed(1)}%)
+                        </span>
                       </p>
                     </div>
                   </Link>
@@ -365,7 +409,11 @@ export default function PortfolioPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.12 }}
       >
-        <SectionCard title="Offerings entered" icon={Rocket} count={offerings.length}>
+        <SectionCard
+          title="Offerings entered"
+          icon={Rocket}
+          count={offerings.length}
+        >
           {offerings.length === 0 ? (
             <EmptyRow message="No offering entries yet." />
           ) : (
@@ -401,7 +449,8 @@ export default function PortfolioPage() {
                         </span>
                       </div>
                       <p className="mt-0.5 text-[12px] text-slate-500">
-                        {entry.quantity.toLocaleString()} tokens · {entry.claimStatus}
+                        {entry.quantity.toLocaleString()} tokens ·{" "}
+                        {entry.claimStatus}
                       </p>
                     </div>
                   </div>
@@ -410,12 +459,16 @@ export default function PortfolioPage() {
                       <p className="text-[14px] font-black tabular-nums text-slate-950">
                         {formatUsdt(entry.usdtAmount)}
                       </p>
-                      <p className="text-[11px] text-slate-400">{formatDate(entry.createdAt)}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {formatDate(entry.createdAt)}
+                      </p>
                     </div>
                     {entry.canClaim ? (
                       <Button
                         size="sm"
-                        onClick={() => claim.mutate({ purchaseId: entry.purchaseId })}
+                        onClick={() =>
+                          claim.mutate({ purchaseId: entry.purchaseId })
+                        }
                         disabled={claim.isPending}
                       >
                         {claim.isPending ? "Claiming..." : "Claim"}
@@ -439,7 +492,11 @@ export default function PortfolioPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
         >
-          <SectionCard title="Trade history" icon={ArrowRightLeft} count={trades?.length ?? 0}>
+          <SectionCard
+            title="Trade history"
+            icon={ArrowRightLeft}
+            count={trades?.length ?? 0}
+          >
             {!trades?.length ? (
               <EmptyRow message="No trades yet." />
             ) : (
@@ -471,7 +528,9 @@ export default function PortfolioPage() {
                             {trade.creatorName}
                           </p>
                           <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                            {isBuy ? "Buy" : "Sell"} · {trade.quantity.toFixed(4)} @ {formatUsdt(trade.price)}
+                            {isBuy ? "Buy" : "Sell"} ·{" "}
+                            {trade.quantity.toFixed(4)} @{" "}
+                            {formatUsdt(trade.price)}
                           </p>
                         </div>
                       </div>
@@ -485,7 +544,9 @@ export default function PortfolioPage() {
                           {isBuy ? "-" : "+"}
                           {formatUsdt(trade.usdAmount)}
                         </p>
-                        <p className="text-[11px] text-slate-400">{formatDate(trade.createdAt)}</p>
+                        <p className="text-[11px] text-slate-400">
+                          {formatDate(trade.createdAt)}
+                        </p>
                       </div>
                     </div>
                   );
@@ -500,7 +561,11 @@ export default function PortfolioPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.18 }}
         >
-          <SectionCard title="Dividends" icon={DollarSign} count={dividends?.length ?? 0}>
+          <SectionCard
+            title="Dividends"
+            icon={DollarSign}
+            count={dividends?.length ?? 0}
+          >
             {!dividends?.length ? (
               <EmptyRow message="No dividends received yet." />
             ) : (
@@ -519,7 +584,8 @@ export default function PortfolioPage() {
                           Dividend payment
                         </p>
                         <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                          {dividend.tokenBalanceAtSnapshot.toFixed(4)} tokens at snapshot
+                          {dividend.tokenBalanceAtSnapshot.toFixed(4)} tokens at
+                          snapshot
                         </p>
                       </div>
                     </div>
@@ -527,7 +593,9 @@ export default function PortfolioPage() {
                       <p className="text-[13px] font-black tabular-nums text-emerald-600">
                         +{formatUsdt(dividend.usdcAmount)}
                       </p>
-                      <p className="text-[11px] text-slate-400">{formatDate(dividend.createdAt)}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {formatDate(dividend.createdAt)}
+                      </p>
                     </div>
                   </div>
                 ))}

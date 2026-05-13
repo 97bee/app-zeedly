@@ -652,7 +652,10 @@ function PriceCell({
             {`${positive ? "+" : ""}${(change24hPct ?? 0).toFixed(2)}%`}
           </>
         ) : (
-          <span className="text-slate-400" title="Not enough 24h price history yet">
+          <span
+            className="text-slate-400"
+            title="Not enough 24h price history yet"
+          >
             —
           </span>
         )}
@@ -687,7 +690,12 @@ function TradableTable({ offerings }: { offerings: Offering[] }) {
       </div>
       <div className="divide-y divide-slate-100">
         {offerings.map((offering, index) => (
-          <TradableRow key={offering.ipoId} offering={offering} index={index} cols={cols} />
+          <TradableRow
+            key={offering.ipoId}
+            offering={offering}
+            index={index}
+            cols={cols}
+          />
         ))}
       </div>
     </motion.div>
@@ -739,7 +747,10 @@ function TradableRow({
         <span className="text-right text-[13px] font-black tabular-nums text-slate-950">
           {`$${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(raised)}`}
         </span>
-        <PriceCell creatorId={creator?.creatorId} basePrice={offering.pricePerToken} />
+        <PriceCell
+          creatorId={creator?.creatorId}
+          basePrice={offering.pricePerToken}
+        />
         <span className="text-right text-[12px] font-semibold tabular-nums text-slate-500">
           {formatDate(offering.endsAt)}
         </span>
@@ -1222,11 +1233,7 @@ export default function ExplorePage() {
   );
   const [notified, setNotified] = useState<Set<string>>(new Set());
   const { data: creators, isLoading: isLoadingCreators } = useCreators();
-  const {
-    data: offerings,
-    isLoading: isLoadingOfferings,
-    refetch,
-  } = useIpos();
+  const { data: offerings, isLoading: isLoadingOfferings, refetch } = useIpos();
   const selectedOffering = offerings?.find(
     (o) => o.ipoId === selectedOfferingId,
   );
@@ -1316,7 +1323,7 @@ export default function ExplorePage() {
                 )}
               </div>
               <Button asChild>
-                <Link href="/wallet">
+                <Link href="/portfolio">
                   <Wallet className="h-4 w-4" />
                   Deposit
                 </Link>

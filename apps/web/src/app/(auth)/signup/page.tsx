@@ -85,7 +85,7 @@ export default function SignupPage() {
       const token = await openfort.getAccessToken();
       if (!token) throw new Error("No token returned");
       setAuth(token, "", data.email);
-      router.push("/explore");
+      router.push("/home");
     } catch (err) {
       setServerError(getOpenfortErrorMessage(err));
     }
