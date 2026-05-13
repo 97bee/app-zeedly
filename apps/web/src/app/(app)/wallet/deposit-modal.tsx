@@ -9,7 +9,9 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { CheckCircle2, Loader2, X } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useWalletBalance } from "@/features/wallet/hooks/useWalletBalance";
+import { useDepositQuote } from "@/features/wallet/hooks/useDepositQuote";
+import { useCreateDepositIntent } from "@/features/wallet/hooks/useCreateDepositIntent";
 import { Button } from "@/components/ui/button";
 import { env } from "@/lib/env";
 
@@ -144,17 +146,14 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
   const [processing, setProcessing] = useState<FinalState | null>(null);
   const baselineRef = useRef<number | null>(null);
   const amount = Number.parseFloat(amountStr) || 0;
-  const createIntent = trpc.wallet.createDepositIntent.useMutation();
-  const quote = trpc.wallet.quoteDeposit.useQuery(
-    { amount, currency },
-    { enabled: open && amount >= 10 && amount <= 10000 },
-  );
+  const createIntent = useCreateDepositIntent();
+  const quote = useDepositQuote(amount, currency, open);
 
   // Pre-load balance so we have a baseline to compare against once the
   // Stripe webhook credits the user's wallet. While crediting, poll on
   // an interval so the cached balance (shared with the wallet page) stays
   // fresh.
-  const balanceQuery = trpc.wallet.balance.useQuery(undefined, {
+  const balanceQuery = useWalletBalance({
     enabled: open,
     refetchInterval: crediting ? CREDIT_POLL_INTERVAL_MS : false,
     refetchIntervalInBackground: true,

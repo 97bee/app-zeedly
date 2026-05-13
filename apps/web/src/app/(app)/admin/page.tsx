@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { CheckCircle, XCircle, Rocket, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { trpc } from "@/lib/trpc";
+import { useAdminCreators } from "@/features/admin/hooks/useAdminCreators";
+import { useApproveCreator } from "@/features/admin/hooks/useApproveCreator";
+import { useRejectCreator } from "@/features/admin/hooks/useRejectCreator";
+import { useLaunchIpo } from "@/features/admin/hooks/useLaunchIpo";
 import { Button } from "@/components/ui/button";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -23,7 +26,7 @@ function LaunchOfferingForm({ creatorId, onLaunched }: { creatorId: string; onLa
   const [maxPerAccount, setMaxPerAccount] = useState("5000");
   const [daysOpen, setDaysOpen] = useState("7");
   const [error, setError] = useState<string | null>(null);
-  const launch = trpc.admin.launchIPO.useMutation();
+  const launch = useLaunchIpo();
 
   async function handleLaunch() {
     const priceVal = parseFloat(price);
@@ -101,9 +104,9 @@ function LaunchOfferingForm({ creatorId, onLaunched }: { creatorId: string; onLa
 
 export default function AdminPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const { data: creators, isLoading, refetch } = trpc.admin.listCreators.useQuery();
-  const approve = trpc.admin.approveCreator.useMutation({ onSuccess: () => refetch() });
-  const reject = trpc.admin.rejectCreator.useMutation({ onSuccess: () => refetch() });
+  const { data: creators, isLoading, refetch } = useAdminCreators();
+  const approve = useApproveCreator({ onSuccess: () => refetch() });
+  const reject = useRejectCreator({ onSuccess: () => refetch() });
 
   if (isLoading) {
     return (

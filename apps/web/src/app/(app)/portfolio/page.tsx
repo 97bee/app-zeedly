@@ -16,7 +16,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { trpc } from "@/lib/trpc";
+import { usePortfolioHoldings } from "@/features/portfolio/hooks/usePortfolioHoldings";
+import { usePortfolioDividends } from "@/features/portfolio/hooks/usePortfolioDividends";
+import { useMyTrades } from "@/features/trade/hooks/useMyTrades";
+import { useClaimIpo } from "@/features/ipo/hooks/useClaimIpo";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -155,10 +158,10 @@ function offeringStatusTone(state: string) {
 }
 
 export default function PortfolioPage() {
-  const { data: portfolio, isLoading, refetch } = trpc.portfolio.getHoldings.useQuery();
-  const { data: trades } = trpc.trade.myTrades.useQuery({ limit: 20 });
-  const { data: dividends } = trpc.portfolio.dividends.useQuery();
-  const claim = trpc.ipo.claim.useMutation({ onSuccess: () => refetch() });
+  const { data: portfolio, isLoading, refetch } = usePortfolioHoldings();
+  const { data: trades } = useMyTrades(20);
+  const { data: dividends } = usePortfolioDividends();
+  const claim = useClaimIpo({ onSuccess: () => refetch() });
 
   if (isLoading) {
     return (

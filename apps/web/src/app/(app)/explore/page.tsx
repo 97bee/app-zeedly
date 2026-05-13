@@ -35,7 +35,11 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useCreators } from "@/features/creator/hooks/useCreators";
+import { useIpos } from "@/features/ipo/hooks/useIpos";
+import { usePurchaseIpo } from "@/features/ipo/hooks/usePurchaseIpo";
+import { useTradePrice } from "@/features/trade/hooks/useTradePrice";
+import { useWalletBalance } from "@/features/wallet/hooks/useWalletBalance";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -616,10 +620,7 @@ function PriceCell({
   creatorId: string | undefined;
   basePrice: number;
 }) {
-  const { data } = trpc.trade.price.useQuery(
-    { creatorId: creatorId ?? "" },
-    { enabled: !!creatorId, staleTime: 30_000, refetchOnWindowFocus: false },
-  );
+  const { data } = useTradePrice(creatorId);
   const current = data?.price ?? basePrice;
   const change24hPct = data?.change24hPct ?? null;
   const hasChange = change24hPct !== null && Number.isFinite(change24hPct);
@@ -954,8 +955,8 @@ function InvestmentModal({
 }) {
   const [amountStr, setAmountStr] = useState("100");
   const [error, setError] = useState<string | null>(null);
-  const purchase = trpc.ipo.purchase.useMutation();
-  const { data: balance } = trpc.wallet.balance.useQuery();
+  const purchase = usePurchaseIpo();
+  const { data: balance } = useWalletBalance();
   const raiseTarget = getRaiseTarget(offering);
   const accountMax = getAccountMax(offering);
   const raised = offering.raisedUsd ?? 0;
@@ -1220,13 +1221,12 @@ export default function ExplorePage() {
     null,
   );
   const [notified, setNotified] = useState<Set<string>>(new Set());
-  const { data: creators, isLoading: isLoadingCreators } =
-    trpc.creator.list.useQuery();
+  const { data: creators, isLoading: isLoadingCreators } = useCreators();
   const {
     data: offerings,
     isLoading: isLoadingOfferings,
     refetch,
-  } = trpc.ipo.list.useQuery();
+  } = useIpos();
   const selectedOffering = offerings?.find(
     (o) => o.ipoId === selectedOfferingId,
   );

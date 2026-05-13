@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/auth";
-import { trpc } from "@/lib/trpc";
+import { useMe } from "@/features/auth/hooks/useMe";
+import { useRequestKycReview } from "@/features/auth/hooks/useRequestKycReview";
 
 const emailSchema = z.object({ email: z.string().email("Enter a valid email") });
 const passwordSchema = z.object({
@@ -40,9 +41,11 @@ function Section({ title, description, children, delay = 0 }: { title: string; d
 
 export default function SettingsPage() {
   const { email } = useAuthStore();
-  const { data: me, refetch: refetchMe } = trpc.auth.me.useQuery();
-  const requestKycReview = trpc.auth.requestKycReview.useMutation({
-    onSuccess: () => refetchMe(),
+  const { data: me, refetch: refetchMe } = useMe();
+  const requestKycReview = useRequestKycReview({
+    onSuccess: () => {
+      refetchMe();
+    },
   });
   const kycStatus = me?.kycStatus ?? "not_started";
 

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { trpc } from "@/lib/trpc";
+import { useSubmitCreatorApplication } from "@/features/creator/hooks/useSubmitCreatorApplication";
 import { Button } from "@/components/ui/button";
 
 const schema = z.object({
@@ -43,7 +43,7 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
 export default function CreatorApplyPage() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
-  const apply = trpc.creator.submitApplication.useMutation();
+  const apply = useSubmitCreatorApplication();
 
   const { register, handleSubmit, formState: { errors }, setError } = useForm<FormValues>({ resolver: zodResolver(schema) });
 

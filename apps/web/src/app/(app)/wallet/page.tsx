@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
-import { trpc } from "@/lib/trpc";
+import { useWalletBalance } from "@/features/wallet/hooks/useWalletBalance";
+import { useWalletTransactions } from "@/features/wallet/hooks/useWalletTransactions";
 import { Button } from "@/components/ui/button";
 import { DepositModal } from "./deposit-modal";
 
@@ -36,8 +37,8 @@ const TX_TYPE_LABEL: Record<string, string> = {
 export default function WalletPage() {
   const [depositOpen, setDepositOpen] = useState(false);
 
-  const { data: balance, isLoading: balanceLoading, refetch } = trpc.wallet.balance.useQuery();
-  const { data: transactions, isLoading: txLoading, refetch: refetchTransactions } = trpc.wallet.transactions.useQuery();
+  const { data: balance, isLoading: balanceLoading, refetch } = useWalletBalance();
+  const { data: transactions, isLoading: txLoading, refetch: refetchTransactions } = useWalletTransactions();
 
   return (
     <div>

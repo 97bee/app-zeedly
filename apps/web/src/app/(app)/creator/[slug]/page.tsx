@@ -18,7 +18,13 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useCreator } from "@/features/creator/hooks/useCreator";
+import { useIposByCreator } from "@/features/ipo/hooks/useIposByCreator";
+import { usePurchaseIpo } from "@/features/ipo/hooks/usePurchaseIpo";
+import { useExecuteTrade } from "@/features/trade/hooks/useExecuteTrade";
+import { useTradePrice } from "@/features/trade/hooks/useTradePrice";
+import { useCreatorTrades } from "@/features/trade/hooks/useCreatorTrades";
+import { useWalletBalance } from "@/features/wallet/hooks/useWalletBalance";
 import { Button } from "@/components/ui/button";
 
 type ChartPoint = { label: string; value: number };
@@ -147,8 +153,8 @@ function OfferingInvestForm({
   const [amountStr, setAmountStr] = useState("100");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const purchase = trpc.ipo.purchase.useMutation();
-  const { data: balance } = trpc.wallet.balance.useQuery();
+  const purchase = usePurchaseIpo();
+  const { data: balance } = useWalletBalance();
   const amount = Number.parseFloat(amountStr) || 0;
   const quantity = Math.floor(amount / pricePerToken);
   const committed = quantity * pricePerToken;
@@ -252,7 +258,7 @@ function TradeForm({
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ side: string; quantity: number; price: number; fee: number } | null>(null);
-  const trade = trpc.trade.execute.useMutation();
+  const trade = useExecuteTrade();
   const usdtAmount = Number.parseFloat(amount) || 0;
   const estQuantity = currentPrice > 0 ? (usdtAmount * 0.99) / currentPrice : 0;
 
@@ -363,10 +369,9 @@ function TradeForm({
 }
 
 function RecentTrades({ creatorId }: { creatorId: string }) {
-  const { data: trades, isLoading } = trpc.trade.creatorTrades.useQuery(
-    { creatorId, limit: 8 },
-    { refetchInterval: 15_000 },
-  );
+  const { data: trades, isLoading } = useCreatorTrades(creatorId, 8, {
+    refetchInterval: 15_000,
+  });
 
   if (isLoading) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />;
   if (!trades?.length) {
@@ -409,14 +414,13 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
 export default function CreatorPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [notified, setNotified] = useState(false);
-  const { data: creator, isLoading } = trpc.creator.getBySlug.useQuery({ slug });
-  const { data: ipos, refetch: refetchIpos } = trpc.ipo.getByCreator.useQuery(
-    { creatorId: creator?.creatorId ?? "" },
-    { enabled: !!creator?.creatorId },
+  const { data: creator, isLoading } = useCreator(slug);
+  const { data: ipos, refetch: refetchIpos } = useIposByCreator(
+    creator?.creatorId,
   );
-  const { data: priceData, refetch: refetchPrice } = trpc.trade.price.useQuery(
-    { creatorId: creator?.creatorId ?? "" },
-    { enabled: !!creator?.creatorId, refetchInterval: 10_000 },
+  const { data: priceData, refetch: refetchPrice } = useTradePrice(
+    creator?.creatorId,
+    { refetchInterval: 10_000 },
   );
 
   if (isLoading) {
