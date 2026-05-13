@@ -80,7 +80,9 @@ function formatUsdt(amount: number): string {
 }
 
 function formatDate(ts: number): string {
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(ts));
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(
+    new Date(ts),
+  );
 }
 
 function timeUntil(ts: number) {
@@ -95,7 +97,9 @@ function timeUntil(ts: number) {
 }
 
 function getRaiseTarget(offering: Offering) {
-  return offering.raiseTargetUsd || offering.totalSupply * offering.pricePerToken;
+  return (
+    offering.raiseTargetUsd || offering.totalSupply * offering.pricePerToken
+  );
 }
 
 function getAccountMax(offering: Offering) {
@@ -109,16 +113,30 @@ function offeringLabel(status?: string) {
 }
 
 function statusTone(status?: string) {
-  if (status === "active") return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-  if (status === "closed") return "bg-slate-100 text-slate-600 border border-slate-200";
+  if (status === "active")
+    return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+  if (status === "closed")
+    return "bg-slate-100 text-slate-600 border border-slate-200";
   return "bg-amber-50 text-amber-700 border border-amber-100";
 }
 
-function getCreatorKey(creator: Creator | Offering["creator"] | null | undefined) {
-  return [creator?.name, creator?.category, creator?.genre, creator?.tags?.join(" ")].join(" ").toLowerCase();
+function getCreatorKey(
+  creator: Creator | Offering["creator"] | null | undefined,
+) {
+  return [
+    creator?.name,
+    creator?.category,
+    creator?.genre,
+    creator?.tags?.join(" "),
+  ]
+    .join(" ")
+    .toLowerCase();
 }
 
-function matchesSearch(creator: Creator | Offering["creator"] | null | undefined, search: string) {
+function matchesSearch(
+  creator: Creator | Offering["creator"] | null | undefined,
+  search: string,
+) {
   const query = search.trim().toLowerCase();
   if (!query) return true;
   return getCreatorKey(creator).includes(query);
@@ -136,13 +154,28 @@ function hashHue(input: string) {
   return Math.abs(h) % 360;
 }
 
-function LivePulse({ tone = "emerald" }: { tone?: "emerald" | "red" | "lime" }) {
-  const dot = tone === "red" ? "bg-red-500" : tone === "lime" ? "bg-lime" : "bg-emerald-500";
+function LivePulse({
+  tone = "emerald",
+}: {
+  tone?: "emerald" | "red" | "lime";
+}) {
+  const dot =
+    tone === "red"
+      ? "bg-red-500"
+      : tone === "lime"
+        ? "bg-lime"
+        : "bg-emerald-500";
   const ring =
-    tone === "red" ? "bg-red-500/30" : tone === "lime" ? "bg-lime/40" : "bg-emerald-500/30";
+    tone === "red"
+      ? "bg-red-500/30"
+      : tone === "lime"
+        ? "bg-lime/40"
+        : "bg-emerald-500/30";
   return (
     <span className="relative inline-flex h-2 w-2">
-      <span className={cn("absolute inset-0 animate-ping rounded-full", ring)} />
+      <span
+        className={cn("absolute inset-0 animate-ping rounded-full", ring)}
+      />
       <span className={cn("relative inline-flex h-2 w-2 rounded-full", dot)} />
     </span>
   );
@@ -286,7 +319,9 @@ function CategoryStrip({
       </div>
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-20 bg-gradient-to-l from-[#f8fafc] via-[#f8fafc]/85 to-transparent sm:block" />
       <button
-        onClick={() => scrollRef.current?.scrollBy({ left: 320, behavior: "smooth" })}
+        onClick={() =>
+          scrollRef.current?.scrollBy({ left: 320, behavior: "smooth" })
+        }
         aria-label="Scroll categories"
         className="pointer-events-auto absolute right-1 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:text-slate-950 sm:flex"
       >
@@ -309,10 +344,11 @@ function FeaturedHero({
   const target = offering ? getRaiseTarget(offering) : 0;
   const raised = offering?.raisedUsd ?? 0;
   const progress = offering ? getOfferingProgress(offering) : 0;
-  const remaining = offering?.status === "active" ? timeUntil(offering.endsAt) : null;
+  const remaining =
+    offering?.status === "active" ? timeUntil(offering.endsAt) : null;
   const valuation = offering
     ? offering.valuationAtRaise || creator.valuation || target
-    : creator.valuation ?? 0;
+    : (creator.valuation ?? 0);
   const href = creator.slug ? `/creator/${creator.slug}` : "/explore";
 
   return (
@@ -373,7 +409,9 @@ function FeaturedHero({
               <div>
                 <div className="flex items-baseline justify-between text-[12px]">
                   <span className="font-semibold text-white/65">
-                    <span className="font-black text-white">{formatUsdt(raised)}</span>{" "}
+                    <span className="font-black text-white">
+                      {formatUsdt(raised)}
+                    </span>{" "}
                     raised of {formatUsdt(target)}
                   </span>
                   <span className="font-black text-lime">{progress}%</span>
@@ -403,7 +441,11 @@ function FeaturedHero({
               <HeroStat
                 icon={Clock}
                 label={remaining ? "Closes in" : "Valuation"}
-                value={remaining ? `${remaining.value} ${remaining.unit}` : formatCurrency(valuation)}
+                value={
+                  remaining
+                    ? `${remaining.value} ${remaining.unit}`
+                    : formatCurrency(valuation)
+                }
               />
             </dl>
 
@@ -448,7 +490,9 @@ function HeroStat({
       <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45">
         <Icon className="h-3 w-3" /> {label}
       </dt>
-      <dd className="mt-1 truncate text-[18px] font-black tracking-[-0.03em] text-white">{value}</dd>
+      <dd className="mt-1 truncate text-[18px] font-black tracking-[-0.03em] text-white">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -512,10 +556,14 @@ function LiveOfferingCard({
         <div>
           <div className="mb-2 flex items-baseline justify-between text-[12px]">
             <span className="font-semibold text-slate-500">
-              <span className="font-black tabular-nums text-slate-950">{formatUsdt(raised)}</span>{" "}
+              <span className="font-black tabular-nums text-slate-950">
+                {formatUsdt(raised)}
+              </span>{" "}
               of {formatUsdt(target)}
             </span>
-            <span className="font-black tabular-nums text-emerald-600">{progress}%</span>
+            <span className="font-black tabular-nums text-emerald-600">
+              {progress}%
+            </span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
             <motion.div
@@ -528,9 +576,15 @@ function LiveOfferingCard({
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-[12px]">
-          <Metric label="Token price" value={formatUsdt(offering.pricePerToken)} />
+          <Metric
+            label="Token price"
+            value={formatUsdt(offering.pricePerToken)}
+          />
           <Metric label="Tokens left" value={formatNumber(tokensLeft)} />
-          <Metric label="Subscribers" value={formatNumber(creator?.subscriberCount ?? 0)} />
+          <Metric
+            label="Subscribers"
+            value={formatNumber(creator?.subscriberCount ?? 0)}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
@@ -591,7 +645,10 @@ function CompactOfferingCard({
           </span>
         </div>
         <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(${hue} 60% 50%)` }} />
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: `hsl(${hue} 60% 50%)` }}
+          />
           <span className="truncate">{creator?.category ?? "Creator"}</span>
           <span className="text-slate-300">•</span>
           <span className="truncate">
@@ -605,7 +662,10 @@ function CompactOfferingCard({
         {!isClosed ? (
           <div className="mt-2 flex items-center gap-2">
             <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-amber-400" style={{ width: `${progress}%` }} />
+              <div
+                className="h-full rounded-full bg-amber-400"
+                style={{ width: `${progress}%` }}
+              />
             </div>
             <span className="text-[10px] font-black tabular-nums text-slate-400">
               {formatUsdt(target)}
@@ -616,13 +676,19 @@ function CompactOfferingCard({
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-black text-emerald-700">
               <CheckCircle2 className="h-3 w-3" /> 100% funded
             </span>
-            <span className="font-semibold text-slate-400">Raised {formatUsdt(target)}</span>
+            <span className="font-semibold text-slate-400">
+              Raised {formatUsdt(target)}
+            </span>
           </div>
         )}
       </div>
 
       {!isClosed ? (
-        <Button variant={notified ? "secondary" : "outline"} size="sm" onClick={onNotify}>
+        <Button
+          variant={notified ? "secondary" : "outline"}
+          size="sm"
+          onClick={onNotify}
+        >
           <Bell className="h-3.5 w-3.5" />
           {notified ? "Set" : "Notify"}
         </Button>
@@ -655,11 +721,14 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
         <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-950 backdrop-blur-md">
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(${hue} 60% 50%)` }} />
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: `hsl(${hue} 60% 50%)` }}
+          />
           {creator.category}
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-4 relative z-10">
         <div className="-mt-10 mb-3 flex items-end justify-between">
           <div className="h-14 w-14 overflow-hidden rounded-2xl border-2 border-white bg-slate-950 shadow-sm">
             <Avatar creator={creator} size={56} />
@@ -668,15 +737,30 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
             <ArrowUpRight className="h-4 w-4" />
           </span>
         </div>
-        <h3 className="text-[15px] font-black tracking-[-0.03em] text-slate-950">{creator.name}</h3>
+        <h3 className="text-[15px] font-black tracking-[-0.03em] text-slate-950">
+          {creator.name}
+        </h3>
         <p className="mt-1 line-clamp-2 min-h-[40px] text-[13px] leading-5 text-slate-500">
           {creator.bio ||
             `${creator.name} creates ${creator.category.toLowerCase()} content for a recurring audience.`}
         </p>
         <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-          <Metric label="Subs" value={formatNumber(creator.subscriberCount ?? 0)} compact />
-          <Metric label="Views" value={formatNumber(creator.avgViews ?? 0)} compact />
-          <Metric label="Rev/mo" value={formatCurrency(creator.monthlyRevenue ?? 0)} compact accent />
+          <Metric
+            label="Subs"
+            value={formatNumber(creator.subscriberCount ?? 0)}
+            compact
+          />
+          <Metric
+            label="Views"
+            value={formatNumber(creator.avgViews ?? 0)}
+            compact
+          />
+          <Metric
+            label="Rev/mo"
+            value={formatCurrency(creator.monthlyRevenue ?? 0)}
+            compact
+            accent
+          />
         </div>
       </div>
     </motion.a>
@@ -696,7 +780,14 @@ function Metric({
 }) {
   return (
     <div>
-      <p className={cn("text-slate-400", compact ? "text-[10px]" : "text-[11px]")}>{label}</p>
+      <p
+        className={cn(
+          "text-slate-400",
+          compact ? "text-[10px]" : "text-[11px]",
+        )}
+      >
+        {label}
+      </p>
       <p
         className={cn(
           "font-black tracking-[-0.02em] text-slate-950 tabular-nums",
@@ -742,7 +833,9 @@ function InvestmentModal({
     Math.max(0, available),
   );
 
-  const quickAmounts = [25, 100, 500, 1000].filter((a, i) => i === 0 || a <= ceiling);
+  const quickAmounts = [25, 100, 500, 1000].filter(
+    (a, i) => i === 0 || a <= ceiling,
+  );
 
   async function handleSubmit() {
     if (quantity < 1) {
@@ -799,7 +892,9 @@ function InvestmentModal({
               <h2 className="mt-1 truncate text-xl font-black tracking-[-0.04em]">
                 {offering.creator?.name}
               </h2>
-              <p className="mt-1 text-[12px] text-white/55">{offering.creator?.category}</p>
+              <p className="mt-1 text-[12px] text-white/55">
+                {offering.creator?.category}
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -813,8 +908,12 @@ function InvestmentModal({
         <div className="space-y-5 p-6">
           <div>
             <label className="mb-1.5 flex items-baseline justify-between text-[12px]">
-              <span className="font-semibold text-slate-600">Amount to lock</span>
-              <span className="font-bold text-slate-400">Available {formatUsdt(available)}</span>
+              <span className="font-semibold text-slate-600">
+                Amount to lock
+              </span>
+              <span className="font-bold text-slate-400">
+                Available {formatUsdt(available)}
+              </span>
             </label>
             <div className="relative">
               <input
@@ -854,9 +953,14 @@ function InvestmentModal({
           <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-[13px]">
             <Row label="Estimated tokens" value={quantity.toLocaleString()} />
             <Row label="USDT to lock" value={formatUsdt(spend)} />
-            <Row label="Token price" value={formatUsdt(offering.pricePerToken)} muted />
+            <Row
+              label="Token price"
+              value={formatUsdt(offering.pricePerToken)}
+              muted
+            />
             <p className="mt-3 border-t border-slate-200 pt-3 text-[11px] leading-5 text-slate-500">
-              Funds are frozen until the raise closes. KYC is required before tokens are released.
+              Funds are frozen until the raise closes. KYC is required before
+              tokens are released.
             </p>
           </div>
 
@@ -884,11 +988,24 @@ function InvestmentModal({
   );
 }
 
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+function Row({
+  label,
+  value,
+  muted,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
   return (
     <div className="mt-2 flex items-center justify-between first:mt-0">
       <span className="text-slate-500">{label}</span>
-      <span className={cn("font-black tabular-nums", muted ? "text-slate-500" : "text-slate-950")}>
+      <span
+        className={cn(
+          "font-black tabular-nums",
+          muted ? "text-slate-500" : "text-slate-950",
+        )}
+      >
         {value}
       </span>
     </div>
@@ -907,7 +1024,9 @@ function SectionHeading({
   return (
     <div className="mb-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <h2 className="text-[22px] font-black tracking-[-0.04em] text-slate-950">{title}</h2>
+        <h2 className="text-[22px] font-black tracking-[-0.04em] text-slate-950">
+          {title}
+        </h2>
         {tone === "live" ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-red-600">
             <LivePulse tone="red" /> Live
@@ -933,7 +1052,13 @@ function SectionHeading({
   );
 }
 
-function EmptyState({ message, compact }: { message: string; compact?: boolean }) {
+function EmptyState({
+  message,
+  compact,
+}: {
+  message: string;
+  compact?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -949,18 +1074,28 @@ function EmptyState({ message, compact }: { message: string; compact?: boolean }
 export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [search, setSearch] = useState("");
-  const [selectedOfferingId, setSelectedOfferingId] = useState<string | null>(null);
+  const [selectedOfferingId, setSelectedOfferingId] = useState<string | null>(
+    null,
+  );
   const [notified, setNotified] = useState<Set<string>>(new Set());
-  const { data: creators, isLoading: isLoadingCreators } = trpc.creator.list.useQuery();
-  const { data: offerings, isLoading: isLoadingOfferings, refetch } = trpc.ipo.list.useQuery();
-  const selectedOffering = offerings?.find((o) => o.ipoId === selectedOfferingId);
+  const { data: creators, isLoading: isLoadingCreators } =
+    trpc.creator.list.useQuery();
+  const {
+    data: offerings,
+    isLoading: isLoadingOfferings,
+    refetch,
+  } = trpc.ipo.list.useQuery();
+  const selectedOffering = offerings?.find(
+    (o) => o.ipoId === selectedOfferingId,
+  );
 
   const allCreators = useMemo(() => creators ?? [], [creators]);
   const allOfferings = useMemo(() => offerings ?? [], [offerings]);
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const c of allCreators) counts.set(c.category, (counts.get(c.category) ?? 0) + 1);
+    for (const c of allCreators)
+      counts.set(c.category, (counts.get(c.category) ?? 0) + 1);
     return [
       { label: "All", count: allCreators.length },
       ...[...counts.entries()]
@@ -970,18 +1105,24 @@ export default function ExplorePage() {
   }, [allCreators]);
 
   const filteredCreators = allCreators.filter((creator) => {
-    const matchesCategory = selectedCategory === "All" || creator.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "All" || creator.category === selectedCategory;
     return matchesCategory && matchesSearch(creator, search);
   });
 
   const filteredOfferings = allOfferings.filter((o) => {
-    const matchesCategory = selectedCategory === "All" || o.creator?.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "All" || o.creator?.category === selectedCategory;
     return matchesCategory && matchesSearch(o.creator, search);
   });
 
   const liveOfferings = filteredOfferings.filter((o) => o.status === "active");
-  const upcomingOfferings = filteredOfferings.filter((o) => o.status === "upcoming");
-  const completedOfferings = filteredOfferings.filter((o) => o.status === "closed");
+  const upcomingOfferings = filteredOfferings.filter(
+    (o) => o.status === "upcoming",
+  );
+  const completedOfferings = filteredOfferings.filter(
+    (o) => o.status === "closed",
+  );
   const featuredOffering = liveOfferings[0] ?? filteredOfferings[0];
   const featuredCreator = featuredOffering?.creator ?? filteredCreators[0];
   const isLoading = isLoadingCreators || isLoadingOfferings;
@@ -1040,7 +1181,6 @@ export default function ExplorePage() {
               </Button>
             </div>
           </div>
-
         </motion.header>
 
         <section>
@@ -1056,7 +1196,10 @@ export default function ExplorePage() {
             <div className="h-[420px] animate-pulse rounded-[32px] bg-slate-100" />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-80 animate-pulse rounded-[22px] bg-slate-100" />
+                <div
+                  key={i}
+                  className="h-80 animate-pulse rounded-[22px] bg-slate-100"
+                />
               ))}
             </div>
           </div>
@@ -1069,7 +1212,11 @@ export default function ExplorePage() {
             />
 
             <section>
-              <SectionHeading title="Live raises" count={liveOfferings.length} tone="live" />
+              <SectionHeading
+                title="Live raises"
+                count={liveOfferings.length}
+                tone="live"
+              />
               {liveOfferings.length === 0 ? (
                 <EmptyState message="No live raises match this filter." />
               ) : (
@@ -1119,7 +1266,10 @@ export default function ExplorePage() {
                       />
                     ))
                   ) : (
-                    <EmptyState message="No upcoming raises match this filter." compact />
+                    <EmptyState
+                      message="No upcoming raises match this filter."
+                      compact
+                    />
                   )}
                 </div>
               </div>
@@ -1140,14 +1290,20 @@ export default function ExplorePage() {
                       />
                     ))
                   ) : (
-                    <EmptyState message="No completed raises match this filter." compact />
+                    <EmptyState
+                      message="No completed raises match this filter."
+                      compact
+                    />
                   )}
                 </div>
               </div>
             </section>
 
             <section>
-              <SectionHeading title="All creators" count={filteredCreators.length} />
+              <SectionHeading
+                title="All creators"
+                count={filteredCreators.length}
+              />
               {filteredCreators.length === 0 ? (
                 <EmptyState message="No creators match this filter." />
               ) : (
