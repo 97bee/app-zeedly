@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, DM_Serif_Display } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { ThemeProvider, themeBootScript } from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,11 +35,17 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${dmSerif.variable}`}
+      suppressHydrationWarning
     >
-      <body
-        className="bg-[#f8fafc] text-slate-950 antialiased"
-      >
-        <Providers>{children}</Providers>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: themeBootScript }}
+        />
+      </head>
+      <body className="bg-background text-foreground antialiased">
+        <ThemeProvider>
+          <Providers>{children}</Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

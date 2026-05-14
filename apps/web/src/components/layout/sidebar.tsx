@@ -13,12 +13,15 @@ import {
   ShieldCheck,
   PenLine,
   Menu,
+  Moon,
+  Sun,
   X,
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { getOpenfort } from "@/lib/openfort";
+import { useTheme } from "@/components/theme-provider";
 
 const OverviewItems = [{ href: "/home", label: "Home", icon: Home }];
 const MarketItems = [
@@ -39,6 +42,29 @@ const sections = [
 ];
 
 const COLLAPSED_KEY = "zeedly:sidebar-collapsed";
+
+function ThemeToggleButton({ collapsed }: { collapsed: boolean }) {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <button
+      onClick={toggle}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className={cn(
+        "flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] text-[12px] font-semibold text-white/70 transition-all hover:bg-white/[0.08] hover:text-white",
+        collapsed
+          ? "h-9 w-9 justify-center self-center px-0"
+          : "px-3 py-2",
+      )}
+    >
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {!collapsed ? (
+        <span className="truncate">{isDark ? "Light mode" : "Dark mode"}</span>
+      ) : null}
+    </button>
+  );
+}
 
 function SidebarBody({
   onNavigate,
@@ -134,6 +160,14 @@ function SidebarBody({
       </nav>
 
       <div className="border-t border-white/10 pt-4">
+        <div
+          className={cn(
+            "mb-3 flex",
+            collapsed ? "justify-center" : "justify-start",
+          )}
+        >
+          <ThemeToggleButton collapsed={collapsed} />
+        </div>
         {email ? (
           <div
             className={cn(

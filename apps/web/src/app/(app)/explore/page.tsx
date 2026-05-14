@@ -121,7 +121,7 @@ function statusTone(status?: string) {
   if (status === "active")
     return "bg-emerald-50 text-emerald-700 border border-emerald-100";
   if (status === "closed")
-    return "bg-slate-100 text-slate-600 border border-slate-200";
+    return "bg-slate-100 dark:bg-slate-800 text-slate-600 border border-slate-200 dark:border-slate-800";
   return "bg-amber-50 text-amber-700 border border-amber-100";
 }
 
@@ -271,13 +271,13 @@ function CategoryChip({
         "group flex shrink-0 snap-start items-center gap-2 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition-all",
         active
           ? "border-slate-950 bg-slate-950 text-white shadow-[0_8px_22px_rgba(15,23,42,0.18)]"
-          : "border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950",
+          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950 dark:text-slate-50",
       )}
     >
       <span
         className={cn(
           "flex h-6 w-6 items-center justify-center rounded-full",
-          active ? "bg-white/15" : "bg-slate-50 group-hover:bg-slate-100",
+          active ? "bg-white/15" : "bg-slate-50 dark:bg-slate-900/40 group-hover:bg-slate-100 dark:bg-slate-800",
         )}
         style={!active ? { color: `hsl(${hue} 50% 35%)` } : undefined}
       >
@@ -287,7 +287,7 @@ function CategoryChip({
       <span
         className={cn(
           "rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums",
-          active ? "bg-white/15 text-white/85" : "bg-slate-100 text-slate-500",
+          active ? "bg-white/15 text-white/85" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500",
         )}
       >
         {count}
@@ -328,7 +328,7 @@ function CategoryStrip({
           scrollRef.current?.scrollBy({ left: 320, behavior: "smooth" })
         }
         aria-label="Scroll categories"
-        className="pointer-events-auto absolute right-1 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:text-slate-950 sm:flex"
+        className="pointer-events-auto absolute right-1 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-500 shadow-sm hover:text-slate-950 dark:text-slate-50 sm:flex"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -377,7 +377,7 @@ function FeaturedHero({
             Featured creator
           </div>
           {offering?.status === "active" ? (
-            <div className="absolute right-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-slate-950 backdrop-blur-md">
+            <div className="absolute right-5 top-5 flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-slate-950 dark:text-slate-50 backdrop-blur-md">
               <LivePulse tone="red" />
               Live raise
             </div>
@@ -458,7 +458,7 @@ function FeaturedHero({
               {offering?.status === "active" ? (
                 <Button
                   onClick={() => onInvest(offering)}
-                  className="bg-lime text-slate-950 shadow-[0_12px_30px_rgba(212,236,44,0.32)] hover:bg-lime-dark hover:text-slate-950"
+                  className="bg-lime text-slate-950 dark:text-slate-50 shadow-[0_12px_30px_rgba(212,236,44,0.32)] hover:bg-lime-dark hover:text-slate-950 dark:text-slate-50"
                 >
                   <Rocket className="h-4 w-4" />
                   Invest now
@@ -518,97 +518,98 @@ function LiveOfferingCard({
   const remaining = timeUntil(offering.endsAt);
   const tokensLeft = Math.max(0, offering.totalSupply - (offering.sold ?? 0));
 
+  const cardHref = creator?.slug ? `/creator/${creator.slug}` : "/explore";
+
   return (
     <motion.div
-      className="group relative overflow-hidden rounded-[22px] border border-slate-200/70 bg-white transition-all hover:-translate-y-1 hover:border-slate-200 hover:shadow-[0_20px_44px_-12px_rgba(15,23,42,0.18)]"
+      className="group relative overflow-hidden rounded-[22px] border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900 transition-all hover:-translate-y-1 hover:border-slate-200 dark:border-slate-800 hover:shadow-[0_20px_44px_-12px_rgba(15,23,42,0.18)]"
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05 }}
     >
-      <div className="relative h-[148px] overflow-hidden">
-        <CreatorImage
-          creator={creator}
-          className="transition-transform duration-700 group-hover:scale-[1.06]"
-          sizes="(min-width: 1280px) 33vw, 100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
-        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-950 backdrop-blur-md">
-          <LivePulse tone="red" /> Live
+      <Link href={cardHref} className="block">
+        <div className="relative h-[148px] overflow-hidden">
+          <CreatorImage
+            creator={creator}
+            className="transition-transform duration-700 group-hover:scale-[1.06]"
+            sizes="(min-width: 1280px) 33vw, 100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+          <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-950 dark:text-slate-50 backdrop-blur-md">
+            <LivePulse tone="red" /> Live
+          </div>
+          {remaining ? (
+            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-white backdrop-blur-md">
+              <Clock className="h-3 w-3" />
+              {remaining.value} {remaining.unit} left
+            </div>
+          ) : null}
+          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 text-white">
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-white/65">
+                {creator?.category}
+                {creator?.genre ? ` · ${creator.genre}` : ""}
+              </p>
+              <h3 className="mt-0.5 truncate text-[18px] font-black tracking-[-0.03em]">
+                {creator?.name ?? "Unknown Creator"}
+              </h3>
+            </div>
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-white/95 shadow-lg">
+              <Avatar creator={creator} size={48} />
+            </div>
+          </div>
         </div>
-        {remaining ? (
-          <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-white backdrop-blur-md">
-            <Clock className="h-3 w-3" />
-            {remaining.value} {remaining.unit} left
-          </div>
-        ) : null}
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 text-white">
-          <div className="min-w-0">
-            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-white/65">
-              {creator?.category}
-              {creator?.genre ? ` · ${creator.genre}` : ""}
-            </p>
-            <h3 className="mt-0.5 truncate text-[18px] font-black tracking-[-0.03em]">
-              {creator?.name ?? "Unknown Creator"}
-            </h3>
-          </div>
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-white/95 shadow-lg">
-            <Avatar creator={creator} size={48} />
-          </div>
-        </div>
-      </div>
 
-      <div className="space-y-5 p-5">
-        <div>
-          <div className="mb-2 flex items-baseline justify-between text-[12px]">
-            <span className="font-semibold text-slate-500">
-              <span className="font-black tabular-nums text-slate-950">
-                {formatUsdt(raised)}
-              </span>{" "}
-              of {formatUsdt(target)}
-            </span>
-            <span className="font-black tabular-nums text-emerald-600">
-              {progress}%
-            </span>
+        <div className="space-y-5 p-5">
+          <div>
+            <div className="mb-2 flex items-baseline justify-between text-[12px]">
+              <span className="font-semibold text-slate-500 dark:text-slate-500">
+                <span className="font-black tabular-nums text-slate-950 dark:text-slate-50">
+                  {formatUsdt(raised)}
+                </span>{" "}
+                of {formatUsdt(target)}
+              </span>
+              <span className="font-black tabular-nums text-emerald-600">
+                {progress}%
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.6, delay: 0.1 + index * 0.05 }}
+              />
+            </div>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, delay: 0.1 + index * 0.05 }}
+
+          <div className="grid grid-cols-3 gap-3 text-[12px]">
+            <Metric
+              label="Token price"
+              value={formatUsdt(offering.pricePerToken)}
+            />
+            <Metric label="Tokens left" value={formatNumber(tokensLeft)} />
+            <Metric
+              label="Subscribers"
+              value={formatNumber(creator?.subscriberCount ?? 0)}
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-3 text-[12px]">
-          <Metric
-            label="Token price"
-            value={formatUsdt(offering.pricePerToken)}
-          />
-          <Metric label="Tokens left" value={formatNumber(tokensLeft)} />
-          <Metric
-            label="Subscribers"
-            value={formatNumber(creator?.subscriberCount ?? 0)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          {creator?.slug ? (
-            <Link
-              href={`/creator/${creator.slug}`}
-              className="text-[12px] font-bold text-slate-500 transition-colors hover:text-slate-950"
+          <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800/70 pt-4">
+            <Button
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onInvest(offering);
+              }}
+              size="sm"
             >
-              View profile →
-            </Link>
-          ) : (
-            <span />
-          )}
-          <Button onClick={() => onInvest(offering)} size="sm">
-            <Rocket className="h-3.5 w-3.5" />
-            Invest
-          </Button>
+              <Rocket className="h-3.5 w-3.5" />
+              Invest
+            </Button>
+          </div>
         </div>
-      </div>
+      </Link>
     </motion.div>
   );
 }
@@ -628,7 +629,7 @@ function PriceCell({
   return (
     <>
       <div className="text-right">
-        <p className="text-[15px] font-black tabular-nums tracking-[-0.01em] text-slate-950">
+        <p className="text-[15px] font-black tabular-nums tracking-[-0.01em] text-slate-950 dark:text-slate-50">
           {`$${current.toFixed(2)}`}
         </p>
       </div>
@@ -653,7 +654,7 @@ function PriceCell({
           </>
         ) : (
           <span
-            className="text-slate-400"
+            className="text-slate-400 dark:text-slate-500"
             title="Not enough 24h price history yet"
           >
             —
@@ -669,14 +670,14 @@ function TradableTable({ offerings }: { offerings: Offering[] }) {
     "grid-cols-[minmax(220px,2.2fr)_minmax(90px,1fr)_minmax(110px,1.1fr)_minmax(120px,1.1fr)_minmax(110px,1fr)_minmax(110px,1fr)_72px]";
   return (
     <motion.div
-      className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white"
+      className="overflow-hidden rounded-[22px] border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
       <div
         className={cn(
-          "grid gap-4 border-b border-slate-100 bg-slate-50/60 px-6 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400",
+          "grid gap-4 border-b border-slate-100 dark:border-slate-800/70 bg-slate-50/60 px-6 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500",
           cols,
         )}
       >
@@ -732,29 +733,29 @@ function TradableRow({
             <Avatar creator={creator} size={40} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+            <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50">
               {creator?.name ?? "Unknown creator"}
             </p>
-            <p className="truncate text-[11px] text-slate-500">
+            <p className="truncate text-[11px] text-slate-500 dark:text-slate-500">
               {creator?.category ?? "Creator"}
               {creator?.genre ? ` · ${creator.genre}` : ""}
             </p>
           </div>
         </div>
-        <span className="text-right text-[13px] font-black tabular-nums text-slate-950">
+        <span className="text-right text-[13px] font-black tabular-nums text-slate-950 dark:text-slate-50">
           {formatNumber(creator?.subscriberCount ?? 0)}
         </span>
-        <span className="text-right text-[13px] font-black tabular-nums text-slate-950">
+        <span className="text-right text-[13px] font-black tabular-nums text-slate-950 dark:text-slate-50">
           {`$${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(raised)}`}
         </span>
         <PriceCell
           creatorId={creator?.creatorId}
           basePrice={offering.pricePerToken}
         />
-        <span className="text-right text-[12px] font-semibold tabular-nums text-slate-500">
+        <span className="text-right text-[12px] font-semibold tabular-nums text-slate-500 dark:text-slate-500">
           {formatDate(offering.endsAt)}
         </span>
-        <span className="flex h-8 w-8 items-center justify-center justify-self-end rounded-full border border-slate-200 bg-white text-slate-400 transition-colors group-hover:border-slate-950 group-hover:bg-slate-950 group-hover:text-white">
+        <span className="flex h-8 w-8 items-center justify-center justify-self-end rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-colors group-hover:border-slate-950 group-hover:bg-slate-950 group-hover:text-white">
           <ArrowUpRight className="h-4 w-4" />
         </span>
       </Link>
@@ -778,15 +779,20 @@ function CompactOfferingCard({
   const opensIn = timeUntil(offering.startsAt);
   const hue = hashHue(creator?.category ?? "");
 
+  const cardHref = creator?.slug ? `/creator/${creator.slug}` : "/explore";
+
   return (
-    <div className="flex items-center gap-4 rounded-[18px] border border-slate-200/70 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-[0_14px_32px_-12px_rgba(15,23,42,0.18)]">
+    <Link
+      href={cardHref}
+      className="flex items-center gap-4 rounded-[18px] border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900 p-4 transition-all hover:-translate-y-0.5 hover:border-slate-200 dark:border-slate-800 hover:shadow-[0_14px_32px_-12px_rgba(15,23,42,0.18)]"
+    >
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-slate-950 ring-1 ring-slate-200">
         <Avatar creator={creator} size={56} />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h3 className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+          <h3 className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50">
             {creator?.name ?? "Unknown Creator"}
           </h3>
           <span
@@ -798,7 +804,7 @@ function CompactOfferingCard({
             {offeringLabel(offering.status)}
           </span>
         </div>
-        <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
+        <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-500">
           <span
             className="h-1.5 w-1.5 rounded-full"
             style={{ background: `hsl(${hue} 60% 50%)` }}
@@ -815,22 +821,22 @@ function CompactOfferingCard({
         </div>
         {!isClosed ? (
           <div className="mt-2 flex items-center gap-2">
-            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
                 className="h-full rounded-full bg-amber-400"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="text-[10px] font-black tabular-nums text-slate-400">
+            <span className="text-[10px] font-black tabular-nums text-slate-400 dark:text-slate-500">
               {formatUsdt(target)}
             </span>
           </div>
         ) : (
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-500">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-black text-emerald-700">
               <CheckCircle2 className="h-3 w-3" /> 100% funded
             </span>
-            <span className="font-semibold text-slate-400">
+            <span className="font-semibold text-slate-400 dark:text-slate-500">
               Raised {formatUsdt(target)}
             </span>
           </div>
@@ -841,19 +847,21 @@ function CompactOfferingCard({
         <Button
           variant={notified ? "secondary" : "outline"}
           size="sm"
-          onClick={onNotify}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onNotify();
+          }}
         >
           <Bell className="h-3.5 w-3.5" />
           {notified ? "Set" : "Notify"}
         </Button>
       ) : (
-        <Button asChild size="sm">
-          <Link href={creator?.slug ? `/creator/${creator.slug}` : "/explore"}>
-            Trade <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
+        <Button size="sm">
+          Trade <ArrowUpRight className="h-3.5 w-3.5" />
         </Button>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -862,7 +870,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
   return (
     <motion.a
       href={`/creator/${creator.slug}`}
-      className="group relative overflow-hidden rounded-[20px] border border-slate-200/70 bg-white transition-all hover:-translate-y-1 hover:border-slate-200 hover:shadow-[0_18px_40px_-14px_rgba(15,23,42,0.18)]"
+      className="group relative overflow-hidden rounded-[20px] border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900 transition-all hover:-translate-y-1 hover:border-slate-200 dark:border-slate-800 hover:shadow-[0_18px_40px_-14px_rgba(15,23,42,0.18)]"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
@@ -874,7 +882,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
           sizes="(min-width: 1280px) 25vw, 100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-950 backdrop-blur-md">
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-slate-950 dark:text-slate-50 backdrop-blur-md">
           <span
             className="h-1.5 w-1.5 rounded-full"
             style={{ background: `hsl(${hue} 60% 50%)` }}
@@ -887,18 +895,18 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
           <div className="h-14 w-14 overflow-hidden rounded-2xl border-2 border-white bg-slate-950 shadow-sm">
             <Avatar creator={creator} size={56} />
           </div>
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors group-hover:border-slate-950 group-hover:text-slate-950">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 transition-colors group-hover:border-slate-950 group-hover:text-slate-950 dark:text-slate-50">
             <ArrowUpRight className="h-4 w-4" />
           </span>
         </div>
-        <h3 className="text-[15px] font-black tracking-[-0.03em] text-slate-950">
+        <h3 className="text-[15px] font-black tracking-[-0.03em] text-slate-950 dark:text-slate-50">
           {creator.name}
         </h3>
-        <p className="mt-1 line-clamp-2 min-h-[40px] text-[13px] leading-5 text-slate-500">
+        <p className="mt-1 line-clamp-2 min-h-[40px] text-[13px] leading-5 text-slate-500 dark:text-slate-500">
           {creator.bio ||
             `${creator.name} creates ${creator.category.toLowerCase()} content for a recurring audience.`}
         </p>
-        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 dark:border-slate-800/70 pt-4">
           <Metric
             label="Subs"
             value={formatNumber(creator.subscriberCount ?? 0)}
@@ -936,7 +944,7 @@ function Metric({
     <div>
       <p
         className={cn(
-          "text-slate-400",
+          "text-slate-400 dark:text-slate-500",
           compact ? "text-[10px]" : "text-[11px]",
         )}
       >
@@ -944,7 +952,7 @@ function Metric({
       </p>
       <p
         className={cn(
-          "font-black tracking-[-0.02em] text-slate-950 tabular-nums",
+          "font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50 tabular-nums",
           compact ? "text-[12px]" : "text-[14px]",
           accent && "text-emerald-600",
         )}
@@ -1030,7 +1038,7 @@ function InvestmentModal({
       onClick={onClose}
     >
       <motion.div
-        className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_28px_64px_-16px_rgba(15,23,42,0.35)]"
+        className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_28px_64px_-16px_rgba(15,23,42,0.35)]"
         initial={{ scale: 0.96, y: 16 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.96, y: 16 }}
@@ -1065,7 +1073,7 @@ function InvestmentModal({
               <span className="font-semibold text-slate-600">
                 Amount to lock
               </span>
-              <span className="font-bold text-slate-400">
+              <span className="font-bold text-slate-400 dark:text-slate-500">
                 Available {formatUsdt(available)}
               </span>
             </label>
@@ -1077,9 +1085,9 @@ function InvestmentModal({
                 step="1"
                 value={amountStr}
                 onChange={(e) => setAmountStr(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5 pr-16 text-[20px] font-black tabular-nums text-slate-950 transition-all focus:border-slate-950 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-950/10"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 px-4 py-3.5 pr-16 text-[20px] font-black tabular-nums text-slate-950 dark:text-slate-50 transition-all focus:border-slate-950 focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-950/10"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                 USDT
               </span>
             </div>
@@ -1088,7 +1096,7 @@ function InvestmentModal({
                 <button
                   key={a}
                   onClick={() => setAmountStr(String(a))}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold text-slate-600 hover:border-slate-950 hover:text-slate-950"
+                  className="rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 text-[11px] font-bold text-slate-600 hover:border-slate-950 hover:text-slate-950 dark:text-slate-50"
                 >
                   {a}
                 </button>
@@ -1104,7 +1112,7 @@ function InvestmentModal({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-[13px]">
+          <div className="rounded-2xl border border-slate-100 dark:border-slate-800/70 bg-slate-50 dark:bg-slate-900/40 p-4 text-[13px]">
             <Row label="Estimated tokens" value={quantity.toLocaleString()} />
             <Row label="USDT to lock" value={formatUsdt(spend)} />
             <Row
@@ -1112,7 +1120,7 @@ function InvestmentModal({
               value={formatUsdt(offering.pricePerToken)}
               muted
             />
-            <p className="mt-3 border-t border-slate-200 pt-3 text-[11px] leading-5 text-slate-500">
+            <p className="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3 text-[11px] leading-5 text-slate-500 dark:text-slate-500">
               Funds are frozen until the raise closes. KYC is required before
               tokens are released.
             </p>
@@ -1153,11 +1161,11 @@ function Row({
 }) {
   return (
     <div className="mt-2 flex items-center justify-between first:mt-0">
-      <span className="text-slate-500">{label}</span>
+      <span className="text-slate-500 dark:text-slate-500">{label}</span>
       <span
         className={cn(
           "font-black tabular-nums",
-          muted ? "text-slate-500" : "text-slate-950",
+          muted ? "text-slate-500 dark:text-slate-500" : "text-slate-950 dark:text-slate-50",
         )}
       >
         {value}
@@ -1178,7 +1186,7 @@ function SectionHeading({
   return (
     <div className="mb-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <h2 className="text-[22px] font-black tracking-[-0.04em] text-slate-950">
+        <h2 className="text-[22px] font-black tracking-[-0.04em] text-slate-950 dark:text-slate-50">
           {title}
         </h2>
         {tone === "live" ? (
@@ -1198,7 +1206,7 @@ function SectionHeading({
         ) : null}
       </div>
       {typeof count === "number" ? (
-        <span className="text-[12px] font-bold text-slate-400">
+        <span className="text-[12px] font-bold text-slate-400 dark:text-slate-500">
           {count} {count === 1 ? "item" : "items"}
         </span>
       ) : null}
@@ -1216,7 +1224,7 @@ function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-[18px] border border-dashed border-slate-200 bg-white/60 text-center text-sm font-medium text-slate-400",
+        "rounded-[18px] border border-dashed border-slate-200 dark:border-slate-800 bg-white/60 text-center text-sm font-medium text-slate-400 dark:text-slate-500",
         compact ? "px-4 py-8" : "px-6 py-14",
       )}
     >
@@ -1292,7 +1300,7 @@ export default function ExplorePage() {
           transition={{ duration: 0.4 }}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-500">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-lime" />
               Creator market
               <span className="text-slate-300">·</span>
@@ -1301,23 +1309,23 @@ export default function ExplorePage() {
               <span>{liveOfferings.length} live raises</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-10 min-w-0 items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-4 shadow-sm backdrop-blur-md sm:w-72">
-                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+              <div className="flex h-10 min-w-0 items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/85 px-4 shadow-sm backdrop-blur-md sm:w-72">
+                <Search className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search creators, tags..."
-                  className="min-w-0 flex-1 bg-transparent text-[13px] text-slate-950 outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent text-[13px] text-slate-950 dark:text-slate-50 outline-none placeholder:text-slate-400 dark:text-slate-500"
                 />
                 {search ? (
                   <button
                     onClick={() => setSearch("")}
-                    className="rounded-full p-0.5 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                    className="rounded-full p-0.5 text-slate-300 transition-colors hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-950 dark:text-slate-50"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 ) : (
-                  <kbd className="hidden rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 sm:inline-block">
+                  <kbd className="hidden rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 dark:text-slate-500 sm:inline-block">
                     ⌘K
                   </kbd>
                 )}
@@ -1342,12 +1350,12 @@ export default function ExplorePage() {
 
         {isLoading ? (
           <div className="space-y-6">
-            <div className="h-[420px] animate-pulse rounded-[32px] bg-slate-100" />
+            <div className="h-[420px] animate-pulse rounded-[32px] bg-slate-100 dark:bg-slate-800" />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-80 animate-pulse rounded-[22px] bg-slate-100"
+                  className="h-80 animate-pulse rounded-[22px] bg-slate-100 dark:bg-slate-800"
                 />
               ))}
             </div>

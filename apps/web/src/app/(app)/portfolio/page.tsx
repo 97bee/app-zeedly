@@ -84,7 +84,7 @@ function StatTile({
           ? "from-emerald-200/40 to-emerald-50/0"
           : "from-slate-200/60 to-slate-50/0";
   return (
-    <div className="relative overflow-hidden rounded-[20px] border border-slate-200/70 bg-white p-5">
+    <div className="relative overflow-hidden rounded-[20px] border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900 p-5">
       <div
         className={cn(
           "pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl",
@@ -93,19 +93,19 @@ function StatTile({
       />
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
             {label}
           </p>
-          <p className="mt-2 text-[24px] font-black tabular-nums tracking-[-0.04em] text-slate-950">
+          <p className="mt-2 text-[24px] font-black tabular-nums tracking-[-0.04em] text-slate-950 dark:text-slate-50">
             {value}
           </p>
           {hint ? (
-            <p className="mt-1 text-[11px] font-semibold text-slate-400">
+            <p className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
               {hint}
             </p>
           ) : null}
         </div>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-slate-500 dark:text-slate-500">
           <Icon className="h-4 w-4" />
         </span>
       </div>
@@ -127,19 +127,19 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+    <div className="overflow-hidden rounded-[22px] border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/70 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           {Icon ? (
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-900/40 text-slate-500 dark:text-slate-500">
               <Icon className="h-4 w-4" />
             </span>
           ) : null}
-          <h2 className="text-[17px] font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-[17px] font-black tracking-[-0.03em] text-slate-950 dark:text-slate-50">
             {title}
           </h2>
           {typeof count === "number" ? (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold tabular-nums text-slate-500">
+            <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-bold tabular-nums text-slate-500 dark:text-slate-500">
               {count}
             </span>
           ) : null}
@@ -160,7 +160,7 @@ function EmptyRow({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-      <p className="text-[13px] font-medium text-slate-400">{message}</p>
+      <p className="text-[13px] font-medium text-slate-400 dark:text-slate-500">{message}</p>
       {action}
     </div>
   );
@@ -176,7 +176,7 @@ function offeringStatusTone(state: string) {
   if (state === "live")
     return "bg-emerald-50 text-emerald-700 border border-emerald-100";
   if (state === "completed")
-    return "bg-slate-100 text-slate-600 border border-slate-200";
+    return "bg-slate-100 dark:bg-slate-800 text-slate-600 border border-slate-200 dark:border-slate-800";
   return "bg-amber-50 text-amber-700 border border-amber-100";
 }
 
@@ -189,16 +189,16 @@ export default function PortfolioPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-36 animate-pulse rounded-[24px] bg-slate-100" />
+        <div className="h-36 animate-pulse rounded-[24px] bg-slate-100 dark:bg-slate-800" />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="h-28 animate-pulse rounded-[20px] bg-slate-100"
+              className="h-28 animate-pulse rounded-[20px] bg-slate-100 dark:bg-slate-800"
             />
           ))}
         </div>
-        <div className="h-64 animate-pulse rounded-[22px] bg-slate-100" />
+        <div className="h-64 animate-pulse rounded-[22px] bg-slate-100 dark:bg-slate-800" />
       </div>
     );
   }
@@ -290,7 +290,7 @@ export default function PortfolioPage() {
             </Button>
             <Button
               asChild
-              className="bg-lime text-slate-950 shadow-[0_12px_30px_rgba(212,236,44,0.32)] hover:bg-lime-dark hover:text-slate-950"
+              className="bg-lime text-slate-950 dark:text-slate-50 shadow-[0_12px_30px_rgba(212,236,44,0.32)] hover:bg-lime-dark hover:text-slate-950 dark:text-slate-50"
             >
               <Link href="/explore">
                 <Compass className="h-4 w-4" />
@@ -366,17 +366,17 @@ export default function PortfolioPage() {
                     <div className="flex min-w-0 items-center gap-3">
                       <CreatorAvatar name={holding.creatorName} />
                       <div className="min-w-0">
-                        <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+                        <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50">
                           {holding.creatorName}
                         </p>
-                        <p className="mt-0.5 truncate text-[12px] text-slate-500">
+                        <p className="mt-0.5 truncate text-[12px] text-slate-500 dark:text-slate-500">
                           {holding.quantity.toFixed(4)} tokens · avg{" "}
                           {formatUsdt(holding.avgCostBasis)}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[14px] font-black tabular-nums text-slate-950">
+                      <p className="text-[14px] font-black tabular-nums text-slate-950 dark:text-slate-50">
                         {formatUsdt(holding.currentValue)}
                       </p>
                       <p
@@ -391,7 +391,7 @@ export default function PortfolioPage() {
                           <ArrowDownRight className="h-3 w-3" />
                         )}
                         {formatUsdt(holding.gainLoss, true)}
-                        <span className="text-slate-400">
+                        <span className="text-slate-400 dark:text-slate-500">
                           ({holding.gainLossPercent.toFixed(1)}%)
                         </span>
                       </p>
@@ -430,12 +430,12 @@ export default function PortfolioPage() {
                         {entry.creatorSlug ? (
                           <Link
                             href={`/creator/${entry.creatorSlug}`}
-                            className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 hover:underline"
+                            className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50 hover:underline"
                           >
                             {entry.creatorName}
                           </Link>
                         ) : (
-                          <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950">
+                          <p className="truncate text-[14px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50">
                             {entry.creatorName}
                           </p>
                         )}
@@ -448,7 +448,7 @@ export default function PortfolioPage() {
                           {offeringStatusLabel(entry.state)}
                         </span>
                       </div>
-                      <p className="mt-0.5 text-[12px] text-slate-500">
+                      <p className="mt-0.5 text-[12px] text-slate-500 dark:text-slate-500">
                         {entry.quantity.toLocaleString()} tokens ·{" "}
                         {entry.claimStatus}
                       </p>
@@ -456,10 +456,10 @@ export default function PortfolioPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-[14px] font-black tabular-nums text-slate-950">
+                      <p className="text-[14px] font-black tabular-nums text-slate-950 dark:text-slate-50">
                         {formatUsdt(entry.usdtAmount)}
                       </p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
                         {formatDate(entry.createdAt)}
                       </p>
                     </div>
@@ -524,10 +524,10 @@ export default function PortfolioPage() {
                           )}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-[13px] font-black tracking-[-0.02em] text-slate-950">
+                          <p className="truncate text-[13px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50">
                             {trade.creatorName}
                           </p>
-                          <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                          <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-500">
                             {isBuy ? "Buy" : "Sell"} ·{" "}
                             {trade.quantity.toFixed(4)} @{" "}
                             {formatUsdt(trade.price)}
@@ -544,7 +544,7 @@ export default function PortfolioPage() {
                           {isBuy ? "-" : "+"}
                           {formatUsdt(trade.usdAmount)}
                         </p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500">
                           {formatDate(trade.createdAt)}
                         </p>
                       </div>
@@ -576,14 +576,14 @@ export default function PortfolioPage() {
                     className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-lime/20 text-slate-950">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-lime/20 text-slate-950 dark:text-slate-50">
                         <DollarSign className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-[13px] font-black tracking-[-0.02em] text-slate-950">
+                        <p className="truncate text-[13px] font-black tracking-[-0.02em] text-slate-950 dark:text-slate-50">
                           Dividend payment
                         </p>
-                        <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-500">
                           {dividend.tokenBalanceAtSnapshot.toFixed(4)} tokens at
                           snapshot
                         </p>
@@ -593,7 +593,7 @@ export default function PortfolioPage() {
                       <p className="text-[13px] font-black tabular-nums text-emerald-600">
                         +{formatUsdt(dividend.usdcAmount)}
                       </p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
                         {formatDate(dividend.createdAt)}
                       </p>
                     </div>

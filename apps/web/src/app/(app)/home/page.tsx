@@ -19,7 +19,9 @@ import { useIpos } from "@/features/ipo/hooks/useIpos";
 import { useCreators } from "@/features/creator/hooks/useCreators";
 import { usePortfolioHoldings } from "@/features/portfolio/hooks/usePortfolioHoldings";
 import { useTradePrice } from "@/features/trade/hooks/useTradePrice";
+import { useTradePriceHistory } from "@/features/trade/hooks/useTradePriceHistory";
 import { useWatchlist } from "@/features/watchlist/hooks/useWatchlist";
+import { Sparkline } from "@/components/ui/sparkline";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 type Offering = RouterOutputs["ipo"]["list"][number];
@@ -121,6 +123,7 @@ function BalanceHeader({
   totalValue,
   cash,
   invested,
+  costBasis,
   locked,
   change24hValue,
   change24hPct,
@@ -128,6 +131,7 @@ function BalanceHeader({
   totalValue: number;
   cash: number;
   invested: number;
+  costBasis: number;
   locked: number;
   change24hValue: number | null;
   change24hPct: number | null;
@@ -199,7 +203,30 @@ function BalanceHeader({
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="Investments" value={formatMoney(invested)} />
+        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.04] p-4 backdrop-blur-sm sm:col-span-2 sm:row-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
+            Investments
+          </p>
+          <p className="mt-1 text-[26px] font-black tracking-[-0.02em] text-white tabular-nums">
+            {formatMoney(invested)}
+          </p>
+          <div className="mt-4 h-20 text-emerald-400/60 sm:h-24">
+            <Sparkline
+              points={
+                invested > 0
+                  ? [costBasis || invested, invested]
+                  : [1, 1]
+              }
+              tone={invested >= costBasis ? "positive" : "negative"}
+              showFill
+              strokeWidth={2}
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+            <span>Open</span>
+            <span>Now</span>
+          </div>
+        </div>
         <StatCard label="Cash" value={formatMoney(cash)} />
         <StatCard label="Locked in offerings" value={formatMoney(locked)} />
       </div>
@@ -211,19 +238,24 @@ function TickerRow({
   creator,
   basePrice,
   isWatched,
+  isOwned,
   onToggleWatch,
 }: {
   creator: CreatorMaybe;
   basePrice: number;
   isWatched: boolean;
+  isOwned: boolean;
   onToggleWatch?: () => void;
 }) {
   const creatorId = creator?.creatorId;
   const { data } = useTradePrice(creatorId);
+  const { data: history } = useTradePriceHistory(creatorId, 24);
   const current = data?.price ?? basePrice;
   const change24hPct = data?.change24hPct ?? null;
   const hasChange = change24hPct !== null && Number.isFinite(change24hPct);
   const positive = (change24hPct ?? 0) >= 0;
+
+  const sparkPoints = (history ?? []).map((p) => p.price);
 
   const ticker = (creator?.slug ?? creator?.name ?? "")
     .replace(/[^a-zA-Z0-9]/g, "")
@@ -231,13 +263,19 @@ function TickerRow({
     .toUpperCase();
 
   return (
-    <div className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/[0.03] sm:px-7">
+    <div className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.03] sm:gap-4 sm:px-7">
       <Link
         href={creator?.slug ? `/creator/${creator.slug}` : "/explore"}
-        className="flex min-w-0 flex-1 items-center gap-3"
+        className="flex min-w-0 shrink-0 items-center gap-3"
       >
         <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[14px] ring-1 ring-white/5">
           <Avatar creator={creator} size={44} />
+          {isOwned ? (
+            <span
+              className="absolute right-0.5 bottom-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-[#0a0b0f]"
+              title="In your portfolio"
+            />
+          ) : null}
         </div>
         <div className="min-w-0">
           <p className="truncate text-[15px] font-bold tracking-[-0.01em] text-white">
@@ -249,7 +287,15 @@ function TickerRow({
         </div>
       </Link>
 
-      <div className="ml-auto flex items-center gap-4 text-right">
+      <div className="hidden h-10 flex-1 items-center px-2 sm:flex">
+        {sparkPoints.length >= 2 ? (
+          <Sparkline points={sparkPoints} tone={positive ? "positive" : "negative"} />
+        ) : (
+          <Sparkline points={[]} tone="neutral" />
+        )}
+      </div>
+
+      <div className="ml-auto flex items-center gap-3 text-right sm:gap-4">
         <div className="min-w-[88px]">
           <p className="text-[15px] font-black tabular-nums tracking-[-0.01em] text-white">
             ${current.toFixed(2)}
@@ -409,6 +455,12 @@ export default function HomePage() {
   const change24hPct =
     invested > 0 && costBasis > 0 ? (gainLoss / costBasis) * 100 : null;
 
+  const ownedCreatorIds = useMemo(
+    () =>
+      new Set((portfolio?.holdings ?? []).map((h) => h.creatorId).filter(Boolean)),
+    [portfolio?.holdings],
+  );
+
   const grouped = useMemo(() => {
     const tradable = (offerings ?? []).filter((o) => o.status === "closed");
     const upcoming = (offerings ?? []).filter(
@@ -456,6 +508,7 @@ export default function HomePage() {
         totalValue={totalValue}
         cash={cash}
         invested={invested}
+        costBasis={costBasis}
         locked={locked}
         change24hValue={change24hValue}
         change24hPct={change24hPct}
@@ -500,6 +553,7 @@ export default function HomePage() {
                   creator={item.creator}
                   basePrice={item.pricePerToken}
                   isWatched={watchlist.has(creatorId)}
+                  isOwned={ownedCreatorIds.has(creatorId)}
                   onToggleWatch={
                     creatorId ? () => watchlist.toggle(creatorId) : undefined
                   }

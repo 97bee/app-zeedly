@@ -18,6 +18,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { Star } from "lucide-react";
 import { useCreator } from "@/features/creator/hooks/useCreator";
 import { useIposByCreator } from "@/features/ipo/hooks/useIposByCreator";
 import { usePurchaseIpo } from "@/features/ipo/hooks/usePurchaseIpo";
@@ -25,7 +26,9 @@ import { useExecuteTrade } from "@/features/trade/hooks/useExecuteTrade";
 import { useTradePrice } from "@/features/trade/hooks/useTradePrice";
 import { useCreatorTrades } from "@/features/trade/hooks/useCreatorTrades";
 import { useWalletBalance } from "@/features/wallet/hooks/useWalletBalance";
+import { useWatchlist } from "@/features/watchlist/hooks/useWatchlist";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ChartPoint = { label: string; value: number };
 
@@ -99,9 +102,9 @@ function MiniLineChart({
           <circle key={`${point.label}-${point.value}`} cx={point.x} cy={point.y} r="4" fill={color} />
         ))}
       </svg>
-      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400">
+      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400 dark:text-slate-500">
         <span>{data[0].label}</span>
-        <span className="text-center text-slate-500">{valueFormatter(data[Math.floor(data.length / 2)].value)}</span>
+        <span className="text-center text-slate-500 dark:text-slate-500">{valueFormatter(data[Math.floor(data.length / 2)].value)}</span>
         <span className="text-right">{data[data.length - 1].label}</span>
       </div>
     </div>
@@ -122,13 +125,13 @@ function ChartPanel({
   valueFormatter?: (value: number) => string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <Icon className="h-4 w-4 text-slate-400" />
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-slate-50">
+          <Icon className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           {title}
         </h3>
-        <span className="text-xs text-slate-400">{formatNumber(data[data.length - 1]?.value ?? 0)}</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">{formatNumber(data[data.length - 1]?.value ?? 0)}</span>
       </div>
       <MiniLineChart data={data} tone={tone} valueFormatter={valueFormatter} />
     </div>
@@ -197,7 +200,7 @@ function OfferingInvestForm({
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-center">
         <CheckCircle2 className="mx-auto h-6 w-6 text-emerald-600" />
         <p className="mt-2 font-semibold text-emerald-700">Participation confirmed</p>
-        <p className="mt-1 text-sm text-zinc-500">Your USDT is locked. KYC is required before claiming tokens after completion.</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">Your USDT is locked. KYC is required before claiming tokens after completion.</p>
       </div>
     );
   }
@@ -205,28 +208,28 @@ function OfferingInvestForm({
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-1.5 block text-sm text-zinc-500">Lock from available USDT balance</label>
+        <label className="mb-1.5 block text-sm text-zinc-500 dark:text-zinc-500">Lock from available USDT balance</label>
         <input
           type="number"
           min={pricePerToken}
           max={Math.min(remaining * pricePerToken, remainingRaiseUsd, maxInvestmentPerAccountUsd)}
           value={amountStr}
           onChange={(event) => setAmountStr(event.target.value)}
-          className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-lg text-slate-950 placeholder-slate-400 transition-all focus:border-slate-950 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-950/5"
+          className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 text-lg text-slate-950 dark:text-slate-50 placeholder-slate-400 transition-all focus:border-slate-950 focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-950/5"
         />
-        <p className="mt-1 text-xs text-zinc-400">
+        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
           Available: {formatUsdt(available, 2)} / Left: {formatUsdt(remainingRaiseUsd, 2)} / Max: {formatUsdt(maxInvestmentPerAccountUsd, 2)}
         </p>
       </div>
 
-      <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
+      <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 px-4 py-3 text-sm">
         <div className="flex justify-between">
-          <span className="text-slate-500">Estimated tokens</span>
-          <span className="font-medium text-slate-950">{quantity.toLocaleString()}</span>
+          <span className="text-slate-500 dark:text-slate-500">Estimated tokens</span>
+          <span className="font-medium text-slate-950 dark:text-slate-50">{quantity.toLocaleString()}</span>
         </div>
         <div className="mt-2 flex justify-between">
-          <span className="text-slate-500">USDT to lock</span>
-          <span className="font-medium text-slate-950">{formatUsdt(committed, 2)}</span>
+          <span className="text-slate-500 dark:text-slate-500">USDT to lock</span>
+          <span className="font-medium text-slate-950 dark:text-slate-50">{formatUsdt(committed, 2)}</span>
         </div>
       </div>
 
@@ -285,7 +288,7 @@ function TradeForm({
           <p className="font-semibold text-emerald-700">
             {result.side === "buy" ? "Bought" : "Sold"} {result.quantity.toFixed(4)} tokens
           </p>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
             At {formatUsdt(result.price, 2)} / Fee {formatUsdt(result.fee, 2)}
           </p>
         </div>
@@ -305,7 +308,7 @@ function TradeForm({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+      <div className="grid grid-cols-2 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 p-1">
         {(["buy", "sell"] as const).map((option) => (
           <button
             key={option}
@@ -314,7 +317,7 @@ function TradeForm({
               setError(null);
             }}
             className={`rounded-lg py-2 text-sm font-medium transition-colors ${
-              side === option ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+              side === option ? "bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-50 shadow-sm" : "text-slate-500 dark:text-slate-500 hover:text-slate-950 dark:text-slate-50"
             }`}
           >
             {option === "buy" ? "Buy" : "Sell"}
@@ -323,7 +326,7 @@ function TradeForm({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm text-zinc-500">Amount (USDT)</label>
+        <label className="mb-1.5 block text-sm text-zinc-500 dark:text-zinc-500">Amount (USDT)</label>
         <input
           type="number"
           min="0.01"
@@ -331,19 +334,19 @@ function TradeForm({
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           placeholder="0.00"
-          className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-lg text-slate-950 placeholder-slate-400 transition-all focus:border-slate-950 focus:bg-white focus:outline-none focus:ring-4 focus:ring-slate-950/5"
+          className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 text-lg text-slate-950 dark:text-slate-50 placeholder-slate-400 transition-all focus:border-slate-950 focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-950/5"
         />
       </div>
 
       {usdtAmount > 0 ? (
-        <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm">
+        <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 px-4 py-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-zinc-500">Estimated tokens</span>
-            <span className="font-medium text-zinc-900">
+            <span className="text-zinc-500 dark:text-zinc-500">Estimated tokens</span>
+            <span className="font-medium text-zinc-900 dark:text-zinc-50">
               {estQuantity.toFixed(4)} {creatorName}
             </span>
           </div>
-          <div className="mt-2 flex justify-between text-xs text-zinc-400">
+          <div className="mt-2 flex justify-between text-xs text-zinc-400 dark:text-zinc-500">
             <span>Trading fee</span>
             <span>{formatUsdt(usdtAmount * 0.01, 2)}</span>
           </div>
@@ -373,19 +376,19 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
     refetchInterval: 15_000,
   });
 
-  if (isLoading) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />;
+  if (isLoading) return <div className="h-40 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />;
   if (!trades?.length) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-400 shadow-sm">
+      <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-10 text-center text-sm text-slate-400 dark:text-slate-500 shadow-sm">
         No token trades yet.
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-6 py-4">
-        <h3 className="text-lg font-semibold text-slate-950">Recent Trades</h3>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+      <div className="border-b border-slate-100 dark:border-slate-800/70 px-6 py-4">
+        <h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Recent Trades</h3>
       </div>
       <div className="divide-y divide-slate-50">
         {trades.map((trade) => (
@@ -401,8 +404,8 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
               <span className="text-sm text-slate-700">{trade.quantity.toFixed(4)} tokens</span>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-slate-950">{formatUsdt(trade.usdAmount, 2)}</p>
-              <p className="text-xs text-slate-400">At {formatUsdt(trade.price, 2)}</p>
+              <p className="text-sm font-medium text-slate-950 dark:text-slate-50">{formatUsdt(trade.usdAmount, 2)}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">At {formatUsdt(trade.price, 2)}</p>
             </div>
           </div>
         ))}
@@ -414,6 +417,7 @@ function RecentTrades({ creatorId }: { creatorId: string }) {
 export default function CreatorPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [notified, setNotified] = useState(false);
+  const watchlist = useWatchlist();
   const { data: creator, isLoading } = useCreator(slug);
   const { data: ipos, refetch: refetchIpos } = useIposByCreator(
     creator?.creatorId,
@@ -426,11 +430,11 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-80 animate-pulse rounded-2xl bg-zinc-100" />
+        <div className="h-80 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="h-56 animate-pulse rounded-xl bg-slate-100" />
-          <div className="h-56 animate-pulse rounded-xl bg-slate-100" />
-          <div className="h-56 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+          <div className="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
         </div>
       </div>
     );
@@ -438,7 +442,7 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
 
   if (!creator) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center text-slate-500 shadow-sm">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-16 text-center text-slate-500 dark:text-slate-500 shadow-sm">
         Creator not found.
       </div>
     );
@@ -501,7 +505,7 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
                   className="h-24 w-24 rounded-3xl border-4 border-white/90 object-cover shadow-[0_12px_34px_rgba(0,0,0,0.35)]"
                 />
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white/90 bg-white text-3xl font-black text-slate-950 shadow-[0_12px_34px_rgba(0,0,0,0.35)]">
+                <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white/90 bg-white dark:bg-slate-900 text-3xl font-black text-slate-950 dark:text-slate-50 shadow-[0_12px_34px_rgba(0,0,0,0.35)]">
                   {creator.name[0]}
                 </div>
               )}
@@ -540,15 +544,35 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
                 </div>
               </div>
             </div>
-            {creator.youtubeUrl ? (
-              <Button asChild variant="secondary" className="bg-white text-slate-950 hover:bg-white/90">
-                <a href={creator.youtubeUrl} target="_blank" rel="noopener noreferrer">
-                  <PlayCircle className="h-4 w-4" />
-                  Go to Channel
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {(() => {
+                const isWatched = watchlist.has(creator.creatorId);
+                return (
+                  <button
+                    onClick={() => watchlist.toggle(creator.creatorId)}
+                    aria-label={isWatched ? "Remove from watchlist" : "Add to watchlist"}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold backdrop-blur transition-all",
+                      isWatched
+                        ? "border-amber-300/30 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25"
+                        : "border-white/15 bg-white/[0.08] text-white hover:bg-white/[0.16]",
+                    )}
+                  >
+                    <Star className={cn("h-4 w-4", isWatched && "fill-current")} />
+                    {isWatched ? "Watching" : "Watch"}
+                  </button>
+                );
+              })()}
+              {creator.youtubeUrl ? (
+                <Button asChild variant="secondary" className="bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-50 hover:bg-white/90">
+                  <a href={creator.youtubeUrl} target="_blank" rel="noopener noreferrer">
+                    <PlayCircle className="h-4 w-4" />
+                    Go to Channel
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
       </section>
@@ -562,12 +586,12 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
               { icon: Upload, label: "Upload Frequency", value: uploadFrequency },
               { icon: Tag, label: "Genre", value: genre },
             ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-                <div className="mb-2 flex items-center gap-2 text-slate-400">
+              <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                <div className="mb-2 flex items-center gap-2 text-slate-400 dark:text-slate-500">
                   <Icon className="h-4 w-4" />
                   <span className="text-xs">{label}</span>
                 </div>
-                <p className="text-lg font-semibold text-slate-950">{value}</p>
+                <p className="text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
               </div>
             ))}
           </div>
@@ -579,15 +603,15 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
           </div>
 
           <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-950">Channel Bio</h2>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Channel Bio</h2>
               <p className="mt-3 leading-7 text-slate-600">
                 {creator.bio ||
                   `${creator.name} is a ${genre.toLowerCase()} creator with a large recurring audience and a channel built around repeatable, high-retention formats.`}
               </p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-950">Background</h2>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Background</h2>
               <p className="mt-3 leading-7 text-slate-600">
                 {creator.background ||
                   "Zeedly tracks audience growth, view velocity, upload cadence, and expected revenue share to present the creator as an investable offering."}
@@ -599,10 +623,10 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
         </main>
 
         <aside className="space-y-5">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
             {activeOffering ? (
               <>
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   <Rocket className="h-5 w-5 text-emerald-600" />
                   Live Offering
                 </h3>
@@ -636,8 +660,8 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
               <div className="space-y-4 text-center">
                 <ClockBadge />
                 <div>
-                  <p className="font-semibold text-zinc-900">Offering coming soon</p>
-                  <p className="mt-1 text-sm text-zinc-500">Starts {formatDate(upcomingOffering.startsAt)}</p>
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-50">Offering coming soon</p>
+                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">Starts {formatDate(upcomingOffering.startsAt)}</p>
                 </div>
                 <Button
                   variant={notified ? "secondary" : "default"}
@@ -650,8 +674,8 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
               </div>
             ) : currentPrice !== null ? (
               <>
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900">
-                  <ArrowRightLeft className="h-5 w-5 text-zinc-500" />
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  <ArrowRightLeft className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
                   Buy Creator Token
                 </h3>
                 <TradeForm
@@ -662,43 +686,43 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
                 />
               </>
             ) : (
-              <div className="py-6 text-center text-sm text-zinc-400">Trading is not available for this creator yet.</div>
+              <div className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-500">Trading is not available for this creator yet.</div>
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">
                 {primaryOffering?.status === "closed" ? "Token" : "Offering"}
               </h2>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-600">
                 {primaryOffering?.dividendCadence ?? "Quarterly"} dividends
               </span>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-zinc-50 p-4">
-                  <p className="text-xs text-zinc-400">
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
                     {primaryOffering?.status === "closed" ? "Valuation Raised At" : "Valuation"}
                   </p>
-                  <p className="mt-1 font-semibold text-zinc-900">{formatUsdt(valuation)}</p>
+                  <p className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">{formatUsdt(valuation)}</p>
                 </div>
-                <div className="rounded-xl bg-zinc-50 p-4">
-                  <p className="text-xs text-zinc-400">Amount Being Raised</p>
-                  <p className="mt-1 font-semibold text-zinc-900">{formatUsdt(raiseTarget)}</p>
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Amount Being Raised</p>
+                  <p className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">{formatUsdt(raiseTarget)}</p>
                 </div>
-                <div className="rounded-xl bg-zinc-50 p-4">
-                  <p className="text-xs text-zinc-400">Max / Account</p>
-                  <p className="mt-1 font-semibold text-zinc-900">{formatUsdt(accountMax)}</p>
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Max / Account</p>
+                  <p className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">{formatUsdt(accountMax)}</p>
                 </div>
-                <div className="rounded-xl bg-zinc-50 p-4">
-                  <p className="text-xs text-zinc-400">Est. Monthly Payout</p>
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Est. Monthly Payout</p>
                   <p className="mt-1 font-semibold text-emerald-600">{formatUsdt(estimatedMonthlyDividend)}</p>
                 </div>
-                <div className="rounded-xl bg-zinc-50 p-4">
-                  <p className="text-xs text-zinc-400">Token Price</p>
-                  <p className="mt-1 font-semibold text-zinc-900">
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Token Price</p>
+                  <p className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">
                     {formatUsdt(primaryOffering?.pricePerToken ?? currentPrice ?? 0, 2)}
                   </p>
                 </div>
@@ -707,13 +731,13 @@ export default function CreatorPage({ params }: { params: Promise<{ slug: string
               {primaryOffering ? (
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span className="text-zinc-500">{formatUsdt(raised)} raised</span>
-                    <span className="text-zinc-400">{percentRaised}% funded</span>
+                    <span className="text-zinc-500 dark:text-zinc-500">{formatUsdt(raised)} raised</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">{percentRaised}% funded</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-zinc-100">
+                  <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
                     <div className="h-full rounded-full bg-slate-950" style={{ width: `${percentRaised}%` }} />
                   </div>
-                  <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+                  <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400 dark:text-zinc-500">
                     <CalendarClock className="h-4 w-4" />
                     {primaryOffering.status === "active"
                       ? `Ends ${formatDate(primaryOffering.endsAt)}`

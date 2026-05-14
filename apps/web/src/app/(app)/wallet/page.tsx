@@ -43,7 +43,7 @@ export default function WalletPage() {
   return (
     <div>
       <motion.h1
-        className="mb-8 text-3xl font-bold font-serif text-zinc-900"
+        className="mb-8 text-3xl font-bold font-serif text-zinc-900 dark:text-zinc-50"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -53,37 +53,37 @@ export default function WalletPage() {
 
       {/* Balance Card */}
       <motion.div
-        className="mb-6 rounded-2xl border border-zinc-200 bg-white p-8"
+        className="mb-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 p-8"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
       >
-        <p className="text-sm text-zinc-500">Available USDT Balance</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-500">Available USDT Balance</p>
         {balanceLoading ? (
-          <div className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-zinc-100" />
+          <div className="mt-1 h-10 w-40 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
         ) : (
-          <p className="mt-1 text-4xl font-bold text-zinc-900">
+          <p className="mt-1 text-4xl font-bold text-zinc-900 dark:text-zinc-50">
             {formatUsdt(balance?.availableUsdtBalance ?? balance?.usdtBalance ?? balance?.usdcBalance ?? 0)}
           </p>
         )}
 
         {!balanceLoading ? (
           <div className="mt-5 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-xl bg-zinc-50 p-4">
-              <p className="text-xs text-zinc-400">Available</p>
-              <p className="mt-1 font-semibold text-zinc-900">
+            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">Available</p>
+              <p className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">
                 {formatUsdt(balance?.availableUsdtBalance ?? balance?.usdtBalance ?? 0)}
               </p>
             </div>
-            <div className="rounded-xl bg-zinc-50 p-4">
-              <p className="text-xs text-zinc-400">Locked in offerings</p>
+            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">Locked in offerings</p>
               <p className="mt-1 font-semibold text-amber-600">
                 {formatUsdt(balance?.lockedUsdtBalance ?? 0)}
               </p>
             </div>
-            <div className="rounded-xl bg-zinc-50 p-4">
-              <p className="text-xs text-zinc-400">Internal total</p>
-              <p className="mt-1 font-semibold text-zinc-900">
+            <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900 p-4">
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">Internal total</p>
+              <p className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">
                 {formatUsdt(balance?.totalUsdtBalance ?? balance?.usdtBalance ?? 0)}
               </p>
             </div>
@@ -91,7 +91,7 @@ export default function WalletPage() {
         ) : null}
 
         {balance?.walletAddress && (
-          <p className="mt-2 font-mono text-xs text-zinc-400 truncate max-w-xs">
+          <p className="mt-2 font-mono text-xs text-zinc-400 dark:text-zinc-500 truncate max-w-xs">
             {balance.walletAddress}
           </p>
         )}
@@ -104,7 +104,7 @@ export default function WalletPage() {
           <Button variant="outline" disabled className="gap-2">
             <ArrowUpFromLine className="h-4 w-4" />
             Withdraw
-            <span className="ml-1 text-xs text-zinc-400">Soon</span>
+            <span className="ml-1 text-xs text-zinc-400 dark:text-zinc-500">Soon</span>
           </Button>
           <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh balance">
             <RefreshCw className="h-4 w-4" />
@@ -112,7 +112,7 @@ export default function WalletPage() {
         </div>
 
         {!balanceLoading && !balance?.walletAddress && (
-          <p className="mt-4 text-sm text-zinc-400">
+          <p className="mt-4 text-sm text-zinc-400 dark:text-zinc-500">
             Token claims will use an embedded wallet once minting is available. Deposits are held off-chain as USDT.
           </p>
         )}
@@ -120,27 +120,27 @@ export default function WalletPage() {
 
       {/* Transaction History */}
       <motion.div
-        className="rounded-2xl border border-zinc-200 bg-white"
+        className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="border-b border-zinc-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Transaction History</h2>
+        <div className="border-b border-zinc-100 dark:border-zinc-800/70 px-6 py-4">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Transaction History</h2>
         </div>
         <div>
           {txLoading ? (
             <div className="px-6 py-8 space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100" />
+                <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
               ))}
             </div>
           ) : !transactions?.length ? (
-            <div className="px-6 py-12 text-center text-sm text-zinc-400">No transactions yet</div>
+            <div className="px-6 py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">No transactions yet</div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-100 text-left text-xs text-zinc-400">
+                <tr className="border-b border-zinc-100 dark:border-zinc-800/70 text-left text-xs text-zinc-400 dark:text-zinc-500">
                   <th className="px-6 py-3 font-medium">Type</th>
                   <th className="px-6 py-3 font-medium">Amount</th>
                   <th className="px-6 py-3 font-medium">Status</th>
@@ -156,7 +156,7 @@ export default function WalletPage() {
 
                   return (
                     <tr key={tx.txId} className="border-b border-zinc-50 last:border-0 text-sm">
-                      <td className="px-6 py-4 font-medium text-zinc-900">
+                      <td className="px-6 py-4 font-medium text-zinc-900 dark:text-zinc-50">
                         {TX_TYPE_LABEL[tx.type] ?? tx.type}
                       </td>
                       <td className="px-6 py-4">
@@ -166,7 +166,7 @@ export default function WalletPage() {
                             {formatUsdt(displayAmount)}
                           </span>
                           {tx.type === "deposit" && tx.fiatAmount ? (
-                            <p className="text-xs text-zinc-400">
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500">
                               {formatFiat(tx.fiatAmount, tx.fiatCurrency ?? "GBP")} converted to USDT
                             </p>
                           ) : null}
@@ -179,13 +179,13 @@ export default function WalletPage() {
                               ? "bg-emerald-50 text-emerald-700"
                               : tx.status === "failed"
                                 ? "bg-red-50 text-red-600"
-                                : "bg-zinc-100 text-zinc-500"
+                                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500"
                           }`}
                         >
                           {tx.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-zinc-400">
+                      <td className="px-6 py-4 text-zinc-400 dark:text-zinc-500">
                         {tx.createdAt ? formatDate(tx.createdAt) : ""}
                       </td>
                     </tr>

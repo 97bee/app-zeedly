@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
-button{
+/* Switch Tailwind's `dark:` variant to a class on <html>. Set by the
+   ThemeProvider before hydration via an inline boot script in the root
+   layout, so first paint already reflects the user's choice. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+button {
   cursor: pointer;
 }
 
@@ -14,31 +19,40 @@ button{
   --sidebar: #0d0f14;
 }
 
+.dark {
+  --background: #0a0b0f;
+  --foreground: #f8fafc;
+  --canvas: #0a0b0f;
+  --card: #11131a;
+  --muted: #94a3b8;
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --sidebar: #0d0f14;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --font-serif: Georgia, "Times New Roman", serif;
-  --color-lime: #D4EC2C;
+  --color-lime: #d4ec2c;
   --color-lime-dark: #c2d926;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-  }
 }
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
@@ -52,4 +66,8 @@ textarea {
 
 ::selection {
   background: rgba(15, 23, 42, 0.12);
+}
+
+.dark ::selection {
+  background: rgba(248, 250, 252, 0.18);
 }

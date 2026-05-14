@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20 transition-all";
+  "w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-50 focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20 transition-all";
 
 function LaunchOfferingForm({ creatorId, onLaunched }: { creatorId: string; onLaunched: () => void }) {
   const [price, setPrice] = useState("1.00");
@@ -65,31 +65,31 @@ function LaunchOfferingForm({ creatorId, onLaunched }: { creatorId: string; onLa
 
   return (
     <motion.div
-      className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+      className="mt-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4"
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
     >
-      <p className="mb-3 text-sm font-medium text-zinc-700">Launch Offering</p>
+      <p className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">Launch Offering</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Price per token (USDT)</label>
+          <label className="mb-1 block text-xs text-zinc-400 dark:text-zinc-500">Price per token (USDT)</label>
           <input type="number" step="0.01" min="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Total supply</label>
+          <label className="mb-1 block text-xs text-zinc-400 dark:text-zinc-500">Total supply</label>
           <input type="number" min="1000" value={supply} onChange={(e) => setSupply(e.target.value)} className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Raise target (USDT)</label>
+          <label className="mb-1 block text-xs text-zinc-400 dark:text-zinc-500">Raise target (USDT)</label>
           <input type="number" min="1" step="1" value={raiseTarget} onChange={(e) => setRaiseTarget(e.target.value)} className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Max/account (USDT)</label>
+          <label className="mb-1 block text-xs text-zinc-400 dark:text-zinc-500">Max/account (USDT)</label>
           <input type="number" min="1" step="1" value={maxPerAccount} onChange={(e) => setMaxPerAccount(e.target.value)} className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-400">Duration (days)</label>
+          <label className="mb-1 block text-xs text-zinc-400 dark:text-zinc-500">Duration (days)</label>
           <input type="number" min="1" value={daysOpen} onChange={(e) => setDaysOpen(e.target.value)} className={inputClass} />
         </div>
       </div>
@@ -111,8 +111,8 @@ export default function AdminPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-zinc-100" />
-        {[...Array(3)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-zinc-100" />)}
+        <div className="h-8 w-48 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+        {[...Array(3)].map((_, i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />)}
       </div>
     );
   }
@@ -127,15 +127,15 @@ export default function AdminPage() {
   return (
     <div>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <h1 className="mb-2 text-3xl font-bold font-serif text-zinc-900">Admin</h1>
-        <p className="mb-8 text-zinc-400">Creator management dashboard</p>
+        <h1 className="mb-2 text-3xl font-bold font-serif text-zinc-900 dark:text-zinc-50">Admin</h1>
+        <p className="mb-8 text-zinc-400 dark:text-zinc-500">Creator management dashboard</p>
       </motion.div>
 
       <motion.div className="mb-8 grid grid-cols-4 gap-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }}>
         {Object.entries(grouped).map(([status, list]) => (
-          <div key={status} className="rounded-2xl border border-zinc-200 bg-white p-4">
-            <p className="text-xs capitalize text-zinc-400">{status}</p>
-            <p className="text-2xl font-bold text-zinc-900">{list.length}</p>
+          <div key={status} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 p-4">
+            <p className="text-xs capitalize text-zinc-400 dark:text-zinc-500">{status}</p>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{list.length}</p>
           </div>
         ))}
       </motion.div>
@@ -145,20 +145,20 @@ export default function AdminPage() {
         if (list.length === 0) return null;
         return (
           <div key={status} className="mb-8">
-            <h2 className="mb-4 text-lg font-semibold capitalize text-zinc-900">{status}</h2>
+            <h2 className="mb-4 text-lg font-semibold capitalize text-zinc-900 dark:text-zinc-50">{status}</h2>
             <div className="space-y-3">
               {list.map((creator) => {
                 const isExpanded = expandedId === creator.creatorId;
                 return (
-                  <motion.div key={creator.creatorId} className="rounded-2xl border border-zinc-200 bg-white" layout>
+                  <motion.div key={creator.creatorId} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900" layout>
                     <div className="flex items-center justify-between p-4">
                       <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime/30 font-bold text-zinc-900">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime/30 font-bold text-zinc-900 dark:text-zinc-50">
                           {creator.name[0]}
                         </div>
                         <div>
-                          <p className="font-semibold text-zinc-900">{creator.name}</p>
-                          <p className="text-sm text-zinc-400">/{creator.slug} &middot; {creator.category}</p>
+                          <p className="font-semibold text-zinc-900 dark:text-zinc-50">{creator.name}</p>
+                          <p className="text-sm text-zinc-400 dark:text-zinc-500">/{creator.slug} &middot; {creator.category}</p>
                         </div>
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[creator.status ?? "pending"]}`}>
                           {creator.status}
@@ -181,7 +181,7 @@ export default function AdminPage() {
                             {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                           </Button>
                         )}
-                        <button onClick={() => setExpandedId(isExpanded ? null : creator.creatorId)} className="ml-1 text-zinc-400 hover:text-zinc-900 transition-colors">
+                        <button onClick={() => setExpandedId(isExpanded ? null : creator.creatorId)} className="ml-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 transition-colors">
                           {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </button>
                       </div>
@@ -189,19 +189,19 @@ export default function AdminPage() {
                     <AnimatePresence>
                       {isExpanded && (
                         <motion.div
-                          className="border-t border-zinc-100 px-4 pb-4 pt-3 overflow-hidden"
+                          className="border-t border-zinc-100 dark:border-zinc-800/70 px-4 pb-4 pt-3 overflow-hidden"
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                         >
                           <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-                            <div><p className="text-zinc-400">Subscribers</p><p className="font-medium text-zinc-900">{(creator.subscriberCount ?? 0).toLocaleString()}</p></div>
-                            <div><p className="text-zinc-400">Avg Views</p><p className="font-medium text-zinc-900">{(creator.avgViews ?? 0).toLocaleString()}</p></div>
-                            <div><p className="text-zinc-400">Revenue/mo</p><p className="font-medium text-zinc-900">${(creator.monthlyRevenue ?? 0).toLocaleString()}</p></div>
-                            <div><p className="text-zinc-400">Revenue Share</p><p className="font-medium text-zinc-900">{((creator.revenueShareBps ?? 0) / 100).toFixed(1)}%</p></div>
+                            <div><p className="text-zinc-400 dark:text-zinc-500">Subscribers</p><p className="font-medium text-zinc-900 dark:text-zinc-50">{(creator.subscriberCount ?? 0).toLocaleString()}</p></div>
+                            <div><p className="text-zinc-400 dark:text-zinc-500">Avg Views</p><p className="font-medium text-zinc-900 dark:text-zinc-50">{(creator.avgViews ?? 0).toLocaleString()}</p></div>
+                            <div><p className="text-zinc-400 dark:text-zinc-500">Revenue/mo</p><p className="font-medium text-zinc-900 dark:text-zinc-50">${(creator.monthlyRevenue ?? 0).toLocaleString()}</p></div>
+                            <div><p className="text-zinc-400 dark:text-zinc-500">Revenue Share</p><p className="font-medium text-zinc-900 dark:text-zinc-50">{((creator.revenueShareBps ?? 0) / 100).toFixed(1)}%</p></div>
                           </div>
                           {creator.youtubeUrl && (
-                            <a href={creator.youtubeUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block text-sm text-zinc-400 hover:text-zinc-900 underline">
+                            <a href={creator.youtubeUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block text-sm text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:text-zinc-50 underline">
                               {creator.youtubeUrl}
                             </a>
                           )}
@@ -220,7 +220,7 @@ export default function AdminPage() {
       })}
 
       {!creators?.length && (
-        <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center text-zinc-400">
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 px-6 py-16 text-center text-zinc-400 dark:text-zinc-500">
           No creator applications yet.
         </div>
       )}

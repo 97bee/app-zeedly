@@ -252,12 +252,12 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Deposit funds</h2>
+      <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 shadow-xl">
+        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/70 px-6 py-4">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Deposit funds</h2>
           <button
             onClick={handleClose}
-            className="text-zinc-400 transition-colors hover:text-zinc-900"
+            className="text-zinc-400 dark:text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-50"
           >
             <X className="h-5 w-5" />
           </button>
@@ -266,14 +266,14 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
         <div className="p-6">
           {crediting ? (
             <div className="space-y-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-50 text-zinc-600">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-zinc-900">
+                <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   Crediting your wallet…
                 </p>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
                   Payment confirmed. Waiting for {formatUsdt(crediting.expectedUsdt)} to
                   arrive in your balance.
                 </p>
@@ -294,12 +294,12 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-zinc-900">
+                <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   {processing.status === "credited"
                     ? "Deposit credited"
                     : "Deposit processing"}
                 </p>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
                   {processing.status === "credited"
                     ? `${formatUsdt(processing.amount)} is now available in your wallet.`
                     : `${formatUsdt(processing.amount)} is on its way — this can take a minute. Refresh shortly to see it land.`}
@@ -311,10 +311,10 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
             </div>
           ) : clientSecret && stripePromise ? (
             <div className="space-y-4">
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-4 py-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">You pay</span>
-                  <span className="font-medium text-zinc-900">
+                  <span className="text-zinc-500 dark:text-zinc-500">You pay</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-50">
                     {formatFiat(
                       displayQuote.fiatAmount,
                       displayQuote.fiatCurrency,
@@ -322,7 +322,7 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                   </span>
                 </div>
                 <div className="mt-2 flex justify-between">
-                  <span className="text-zinc-500">Estimated credit</span>
+                  <span className="text-zinc-500 dark:text-zinc-500">Estimated credit</span>
                   <span className="font-semibold text-emerald-600">
                     {formatUsdt(displayQuote.usdtAmount)}
                   </span>
@@ -360,7 +360,7 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm text-zinc-500">
+                <label className="mb-1.5 block text-sm text-zinc-500 dark:text-zinc-500">
                   Amount to deposit
                 </label>
                 <div className="grid grid-cols-[92px_1fr] gap-2">
@@ -369,7 +369,7 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                     onChange={(event) =>
                       setCurrency(event.target.value as Currency)
                     }
-                    className="rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm font-medium text-zinc-900 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 px-3 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-50 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
                   >
                     {CURRENCIES.map((option) => (
                       <option key={option} value={option}>
@@ -384,10 +384,10 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                     step="1"
                     value={amountStr}
                     onChange={(event) => setAmountStr(event.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-lg text-zinc-900 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 px-4 py-3 text-lg text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 transition-all focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20"
                   />
                 </div>
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
                   Min {currency} 10 / Max {currency} 10,000
                 </p>
               </div>
@@ -397,17 +397,17 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                   <button
                     key={preset}
                     onClick={() => setAmountStr(String(preset))}
-                    className="rounded-xl border border-zinc-200 bg-zinc-50 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-white"
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 transition-colors hover:border-zinc-300 hover:bg-white dark:bg-slate-900"
                   >
                     {currency} {preset}
                   </button>
                 ))}
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-4 py-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">You pay</span>
-                  <span className="font-medium text-zinc-900">
+                  <span className="text-zinc-500 dark:text-zinc-500">You pay</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-50">
                     {formatFiat(
                       displayQuote.fiatAmount,
                       displayQuote.fiatCurrency,
@@ -415,15 +415,15 @@ export function DepositModal({ open, onClose, onSuccess }: Props) {
                   </span>
                 </div>
                 <div className="mt-2 flex justify-between text-sm">
-                  <span className="text-zinc-500">Converted at</span>
-                  <span className="font-medium text-zinc-900">
+                  <span className="text-zinc-500 dark:text-zinc-500">Converted at</span>
+                  <span className="font-medium text-zinc-900 dark:text-zinc-50">
                     1 {displayQuote.fiatCurrency} ={" "}
                     {displayQuote.exchangeRate.toFixed(2)} USDT
                   </span>
                 </div>
-                <div className="mt-3 border-t border-zinc-200 pt-3">
+                <div className="mt-3 border-t border-zinc-200 dark:border-zinc-800 pt-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-zinc-500">
+                    <span className="text-sm text-zinc-500 dark:text-zinc-500">
                       Credited balance
                     </span>
                     <span className="font-semibold text-emerald-600">

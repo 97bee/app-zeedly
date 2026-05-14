@@ -27,14 +27,14 @@ type FormValues = z.infer<typeof schema>;
 const CATEGORIES = ["Entertainment", "Gaming", "Tech", "Productivity", "Finance", "Fitness", "Music", "Education", "Comedy", "Lifestyle", "Other"];
 
 const inputClass =
-  "w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20 transition-all";
+  "w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 focus:border-lime focus:outline-none focus:ring-2 focus:ring-lime/20 transition-all";
 
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-200">{label}</label>
       {children}
-      {hint && <p className="mt-1 text-xs text-zinc-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{hint}</p>}
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
@@ -76,8 +76,8 @@ export default function CreatorApplyPage() {
         transition={{ duration: 0.5 }}
       >
         <CheckCircle className="mb-4 h-16 w-16 text-emerald-500" />
-        <h1 className="text-2xl font-bold font-serif text-zinc-900">Application submitted!</h1>
-        <p className="mt-2 text-zinc-500">We&apos;ll review your application and get back to you soon.</p>
+        <h1 className="text-2xl font-bold font-serif text-zinc-900 dark:text-zinc-50">Application submitted!</h1>
+        <p className="mt-2 text-zinc-500 dark:text-zinc-500">We&apos;ll review your application and get back to you soon.</p>
         <Button className="mt-6" onClick={() => router.push("/explore")}>Back to Explore</Button>
       </motion.div>
     );
@@ -86,25 +86,25 @@ export default function CreatorApplyPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <motion.div className="mb-8" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <h1 className="text-3xl font-bold font-serif text-zinc-900">Apply as a Creator</h1>
-        <p className="mt-2 text-zinc-500">Submit your application to launch a creator offering on Zeedly. We&apos;ll review it within 48 hours.</p>
+        <h1 className="text-3xl font-bold font-serif text-zinc-900 dark:text-zinc-50">Apply as a Creator</h1>
+        <p className="mt-2 text-zinc-500 dark:text-zinc-500">Submit your application to launch a creator offering on Zeedly. We&apos;ll review it within 48 hours.</p>
       </motion.div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <motion.div
-          className="rounded-2xl border border-zinc-200 bg-white p-6"
+          className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 p-6"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
         >
-          <h2 className="mb-5 text-lg font-semibold text-zinc-900">About you</h2>
+          <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-zinc-50">About you</h2>
           <div className="space-y-4">
             <Field label="Display name" error={errors.name?.message}>
               <input {...register("name")} placeholder="MrBeast" className={inputClass} />
             </Field>
             <Field label="Username / slug" hint="Used in your profile URL: zeedly.io/creator/your-slug" error={errors.slug?.message}>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">creator/</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">creator/</span>
                 <input {...register("slug")} placeholder="mrbeast" className={`${inputClass} pl-20`} />
               </div>
             </Field>
@@ -124,12 +124,12 @@ export default function CreatorApplyPage() {
         </motion.div>
 
         <motion.div
-          className="rounded-2xl border border-zinc-200 bg-white p-6"
+          className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-slate-900 p-6"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <h2 className="mb-5 text-lg font-semibold text-zinc-900">Channel metrics</h2>
+          <h2 className="mb-5 text-lg font-semibold text-zinc-900 dark:text-zinc-50">Channel metrics</h2>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Subscribers" error={errors.subscriberCount?.message}>
               <input {...register("subscriberCount")} type="number" min="0" placeholder="1000000" className={inputClass} />
