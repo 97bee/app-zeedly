@@ -2,6 +2,36 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
+import { useAuthStore } from "@/store/auth";
+
+/**
+ * Returns the destination for the marketing CTAs:
+ *   - logged-in users → /home
+ *   - logged-out users → /signup
+ * Guards against SSR hydration mismatch by waiting until mount before
+ * trusting the persisted auth token.
+ */
+function useAppCtaHref() {
+  const token = useAuthStore((s) => s.token);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted && token ? "/home" : "/signup";
+}
+
+function CtaLink({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const href = useAppCtaHref();
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
 import {
   motion,
   useScroll,
@@ -337,13 +367,10 @@ export default function LandingPage() {
               </a>
             ))}
           </div>
-          <Link
-            href="/signup"
-            className="ml-2 flex items-center gap-1.5 rounded-full bg-zinc-800 pl-5 pr-4 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-700 ring-1 ring-white/10"
-          >
-            Sign up
+          <CtaLink className="ml-2 flex items-center gap-1.5 rounded-full bg-zinc-800 pl-5 pr-4 py-2 text-sm font-semibold text-white transition-all hover:bg-zinc-700 ring-1 ring-white/10">
+            Open app
             <ArrowUpRight className="h-4 w-4" />
-          </Link>
+          </CtaLink>
         </div>
       </motion.nav>
 
@@ -385,15 +412,12 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.1 }}
           >
-            <Link
-              href="/signup"
-              className="group mt-10 inline-flex items-center gap-3 rounded-full bg-white pl-3 pr-8 py-3 text-sm font-semibold text-zinc-900 transition-all hover:scale-105 active:scale-95 shadow-[0_8px_32px_rgba(255,255,255,0.15)]"
-            >
+            <CtaLink className="group mt-10 inline-flex items-center gap-3 rounded-full bg-white pl-3 pr-8 py-3 text-sm font-semibold text-zinc-900 transition-all hover:scale-105 active:scale-95 shadow-[0_8px_32px_rgba(255,255,255,0.15)]">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-white">
                 <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
               </span>
-              Sign up today!
-            </Link>
+              Open app
+            </CtaLink>
           </motion.div>
         </motion.div>
 
@@ -452,15 +476,12 @@ export default function LandingPage() {
                     <p className="mt-5 text-base text-zinc-500 leading-relaxed max-w-md">
                       {card.body}
                     </p>
-                    <Link
-                      href="/signup"
-                      className="group mt-8 inline-flex items-center gap-2 rounded-full bg-zinc-900 pl-6 pr-2 py-2.5 text-sm font-semibold text-white transition-all hover:bg-black hover:scale-105 active:scale-95"
-                    >
+                    <CtaLink className="group mt-8 inline-flex items-center gap-2 rounded-full bg-zinc-900 pl-6 pr-2 py-2.5 text-sm font-semibold text-white transition-all hover:bg-black hover:scale-105 active:scale-95">
                       {card.cta}
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
                         <ArrowRight className="h-4 w-4" />
                       </span>
-                    </Link>
+                    </CtaLink>
                   </div>
 
                   {/* Image column */}
@@ -535,12 +556,9 @@ export default function LandingPage() {
             </p>
           </Reveal>
           <Reveal delay={0.3}>
-            <Link
-              href="/signup"
-              className="mt-10 inline-block rounded-full border border-zinc-300 bg-white px-10 py-3 text-sm font-semibold text-zinc-900 transition-all hover:bg-zinc-50 hover:scale-105 active:scale-95 shadow-sm"
-            >
+            <CtaLink className="mt-10 inline-block rounded-full border border-zinc-300 bg-white px-10 py-3 text-sm font-semibold text-zinc-900 transition-all hover:bg-zinc-50 hover:scale-105 active:scale-95 shadow-sm">
               Get Started
-            </Link>
+            </CtaLink>
           </Reveal>
         </div>
       </section>
@@ -782,13 +800,10 @@ export default function LandingPage() {
               </Reveal>
             </div>
             <Reveal delay={0.2}>
-              <Link
-                href="/signup"
-                className="shrink-0 inline-flex items-center gap-2 rounded-full bg-zinc-900 pl-6 pr-5 py-3 text-sm font-semibold text-white transition-all hover:bg-black hover:scale-105 active:scale-95"
-              >
+              <CtaLink className="shrink-0 inline-flex items-center gap-2 rounded-full bg-zinc-900 pl-6 pr-5 py-3 text-sm font-semibold text-white transition-all hover:bg-black hover:scale-105 active:scale-95">
                 Start today
                 <ArrowUpRight className="h-4 w-4" />
-              </Link>
+              </CtaLink>
             </Reveal>
           </div>
 
