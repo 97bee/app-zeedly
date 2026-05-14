@@ -54,7 +54,13 @@ function hashHue(str: string) {
   return Math.abs(h) % 360;
 }
 
-function Avatar({ creator, size = 40 }: { creator: CreatorMaybe; size?: number }) {
+function Avatar({
+  creator,
+  size = 40,
+}: {
+  creator: CreatorMaybe;
+  size?: number;
+}) {
   if (creator?.avatarUrl) {
     return (
       <Image
@@ -135,23 +141,6 @@ function BalanceHeader({
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="px-5 pb-8 pt-6 sm:px-7"
     >
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-slate-700 to-slate-500 text-[11px] font-black tracking-[-0.08em] text-white">
-            z
-          </span>
-          <span className="text-[13px] font-bold uppercase tracking-[0.14em] text-white/75">
-            Zeedly · Creator equity
-          </span>
-        </div>
-        <button
-          aria-label="Notifications"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.05] text-white/55 transition-colors hover:bg-white/[0.1] hover:text-white"
-        >
-          <Bell className="h-4 w-4" />
-        </button>
-      </div>
-
       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
         Account value
       </p>
@@ -300,9 +289,7 @@ function TickerRow({
               : "text-white/30 hover:bg-white/[0.06] hover:text-white/70",
           )}
         >
-          <Star
-            className={cn("h-3.5 w-3.5", isWatched && "fill-current")}
-          />
+          <Star className={cn("h-3.5 w-3.5", isWatched && "fill-current")} />
         </button>
       </div>
     </div>
@@ -429,7 +416,9 @@ export default function HomePage() {
     );
     const watched = (creators ?? [])
       .filter((c) => watchlist.has(c.creatorId))
-      .map<Offering | { creator: Creator; pricePerToken: number; ipoId: string }>((c) => {
+      .map<
+        Offering | { creator: Creator; pricePerToken: number; ipoId: string }
+      >((c) => {
         const matchingOffering = (offerings ?? []).find(
           (o) => o.creator?.creatorId === c.creatorId,
         );
