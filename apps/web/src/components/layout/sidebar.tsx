@@ -46,22 +46,70 @@ const COLLAPSED_KEY = "zeedly:sidebar-collapsed";
 function ThemeToggleButton({ collapsed }: { collapsed: boolean }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
+  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+
+  // Collapsed: show just the round switch knob (track is the whole pill).
+  if (collapsed) {
+    return (
+      <button
+        onClick={toggle}
+        role="switch"
+        aria-checked={isDark}
+        aria-label={label}
+        title={label}
+        className={cn(
+          "relative flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors",
+          isDark
+            ? "border-white/10 bg-white/[0.08]"
+            : "border-white/10 bg-amber-400/40",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-700 shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-transform duration-200",
+            isDark ? "translate-x-[22px]" : "translate-x-[2px]",
+          )}
+        >
+          {isDark ? (
+            <Moon className="h-3 w-3" />
+          ) : (
+            <Sun className="h-3 w-3 text-amber-500" />
+          )}
+        </span>
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={toggle}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={cn(
-        "flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] text-[12px] font-semibold text-white/70 transition-all hover:bg-white/[0.08] hover:text-white",
-        collapsed
-          ? "h-9 w-9 justify-center self-center px-0"
-          : "px-3 py-2",
-      )}
+      role="switch"
+      aria-checked={isDark}
+      aria-label={label}
+      title={label}
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] font-semibold text-white/70 transition-all hover:bg-white/[0.08] hover:text-white"
     >
-      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      {!collapsed ? (
-        <span className="truncate">{isDark ? "Light mode" : "Dark mode"}</span>
-      ) : null}
+      <span className="flex items-center gap-2">
+        {isDark ? (
+          <Moon className="h-3.5 w-3.5 text-white/60" />
+        ) : (
+          <Sun className="h-3.5 w-3.5 text-amber-300" />
+        )}
+        <span className="truncate">{isDark ? "Dark mode" : "Light mode"}</span>
+      </span>
+      <span
+        className={cn(
+          "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+          isDark ? "bg-white/[0.12]" : "bg-amber-400/40",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.5)] transition-transform duration-200",
+            isDark ? "translate-x-[18px]" : "translate-x-[2px]",
+          )}
+        />
+      </span>
     </button>
   );
 }

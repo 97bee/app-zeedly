@@ -8,7 +8,6 @@ import type { inferRouterOutputs } from "@trpc/server";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Bell,
   Pencil,
   Plus,
   Star,
@@ -93,28 +92,18 @@ function Avatar({
 function StatCard({
   label,
   value,
-  accent,
-  children,
 }: {
   label: string;
   value: string;
-  accent?: "muted" | "default";
-  children?: React.ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-[20px] border border-white/[0.04] bg-white/[0.04] p-4 backdrop-blur-sm",
-        accent === "muted" && "bg-white/[0.025]",
-      )}
-    >
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
+    <div className="rounded-[20px] border border-slate-200/70 bg-slate-100/70 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-white/[0.04]">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-white/40">
         {label}
       </p>
-      <p className="mt-1 text-[20px] font-black tracking-[-0.02em] text-white tabular-nums">
+      <p className="mt-1 text-[20px] font-black tracking-[-0.02em] tabular-nums text-slate-950 dark:text-white">
         {value}
       </p>
-      {children}
     </div>
   );
 }
@@ -145,26 +134,28 @@ function BalanceHeader({
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="px-5 pb-8 pt-6 sm:px-7"
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-white/40">
         Account value
       </p>
-      <h1 className="mt-2 flex items-baseline gap-2 text-[44px] font-black leading-none tracking-[-0.05em] text-white sm:text-[56px]">
+      <h1 className="mt-2 flex items-baseline gap-2 text-[44px] font-black leading-none tracking-[-0.05em] text-slate-950 dark:text-white sm:text-[56px]">
         {formatBig(totalValue)}
-        <span className="text-[16px] font-bold tracking-[-0.02em] text-white/40">
+        <span className="text-[16px] font-bold tracking-[-0.02em] text-slate-500 dark:text-white/40">
           USDT
         </span>
       </h1>
 
       <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 text-[11px]">
         <div>
-          <p className="font-bold uppercase tracking-[0.14em] text-white/40">
+          <p className="font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-white/40">
             Last 24h
           </p>
           {hasChange ? (
             <p
               className={cn(
                 "mt-0.5 flex items-center gap-1 text-[14px] font-black tabular-nums",
-                positive ? "text-emerald-400" : "text-red-400",
+                positive
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-500 dark:text-red-400",
               )}
             >
               {positive ? (
@@ -175,18 +166,22 @@ function BalanceHeader({
               {`${positive ? "+" : "-"}${formatBig(Math.abs(change24hValue ?? 0))}`}
             </p>
           ) : (
-            <p className="mt-0.5 text-[14px] font-black text-white/30">—</p>
+            <p className="mt-0.5 text-[14px] font-black text-slate-400 dark:text-white/30">
+              —
+            </p>
           )}
         </div>
         <div>
-          <p className="font-bold uppercase tracking-[0.14em] text-white/40">
+          <p className="font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-white/40">
             Rate of return
           </p>
           {hasChange ? (
             <p
               className={cn(
                 "mt-0.5 flex items-center gap-1 text-[14px] font-black tabular-nums",
-                positive ? "text-emerald-400" : "text-red-400",
+                positive
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-500 dark:text-red-400",
               )}
             >
               {positive ? (
@@ -197,32 +192,32 @@ function BalanceHeader({
               {`${positive ? "+" : ""}${(change24hPct ?? 0).toFixed(2)}%`}
             </p>
           ) : (
-            <p className="mt-0.5 text-[14px] font-black text-white/30">—</p>
+            <p className="mt-0.5 text-[14px] font-black text-slate-400 dark:text-white/30">
+              —
+            </p>
           )}
         </div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-[22px] border border-white/[0.04] bg-white/[0.04] p-4 backdrop-blur-sm sm:col-span-2 sm:row-span-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
+        <div className="rounded-[22px] border border-slate-200/70 bg-slate-100/70 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-white/[0.04] sm:col-span-2 sm:row-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-white/40">
             Investments
           </p>
-          <p className="mt-1 text-[26px] font-black tracking-[-0.02em] text-white tabular-nums">
+          <p className="mt-1 text-[26px] font-black tracking-[-0.02em] tabular-nums text-slate-950 dark:text-white">
             {formatMoney(invested)}
           </p>
-          <div className="mt-4 h-20 text-emerald-400/60 sm:h-24">
+          <div className="mt-4 h-20 text-emerald-500/70 dark:text-emerald-400/60 sm:h-24">
             <Sparkline
               points={
-                invested > 0
-                  ? [costBasis || invested, invested]
-                  : [1, 1]
+                invested > 0 ? [costBasis || invested, invested] : [1, 1]
               }
               tone={invested >= costBasis ? "positive" : "negative"}
               showFill
               strokeWidth={2}
             />
           </div>
-          <div className="mt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+          <div className="mt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-white/35">
             <span>Open</span>
             <span>Now</span>
           </div>
@@ -263,33 +258,36 @@ function TickerRow({
     .toUpperCase();
 
   return (
-    <div className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.03] sm:gap-4 sm:px-7">
+    <div className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03] sm:gap-4 sm:px-7">
       <Link
         href={creator?.slug ? `/creator/${creator.slug}` : "/explore"}
         className="flex min-w-0 shrink-0 items-center gap-3"
       >
-        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[14px] ring-1 ring-white/5">
+        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[14px] ring-1 ring-slate-200 dark:ring-white/5">
           <Avatar creator={creator} size={44} />
           {isOwned ? (
             <span
-              className="absolute right-0.5 bottom-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-[#0a0b0f]"
+              className="absolute right-0.5 bottom-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white dark:ring-[#0a0b0f]"
               title="In your portfolio"
             />
           ) : null}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-bold tracking-[-0.01em] text-white">
+          <p className="truncate text-[15px] font-bold tracking-[-0.01em] text-slate-950 dark:text-white">
             {creator?.name ?? "Unknown creator"}
           </p>
-          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-white/35">
+          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/35">
             {ticker || (creator?.category ?? "creator")}
           </p>
         </div>
       </Link>
 
-      <div className="hidden h-10 flex-1 items-center px-2 sm:flex">
+      <div className="hidden h-10 flex-1 items-center px-2 text-slate-400 dark:text-white/30 sm:flex">
         {sparkPoints.length >= 2 ? (
-          <Sparkline points={sparkPoints} tone={positive ? "positive" : "negative"} />
+          <Sparkline
+            points={sparkPoints}
+            tone={positive ? "positive" : "negative"}
+          />
         ) : (
           <Sparkline points={[]} tone="neutral" />
         )}
@@ -297,7 +295,7 @@ function TickerRow({
 
       <div className="ml-auto flex items-center gap-3 text-right sm:gap-4">
         <div className="min-w-[88px]">
-          <p className="text-[15px] font-black tabular-nums tracking-[-0.01em] text-white">
+          <p className="text-[15px] font-black tabular-nums tracking-[-0.01em] text-slate-950 dark:text-white">
             ${current.toFixed(2)}
           </p>
           <div
@@ -305,9 +303,9 @@ function TickerRow({
               "mt-0.5 flex items-center justify-end gap-0.5 text-[12px] font-black tabular-nums",
               hasChange
                 ? positive
-                  ? "text-emerald-400"
-                  : "text-red-400"
-                : "text-white/25",
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-500 dark:text-red-400"
+                : "text-slate-300 dark:text-white/25",
             )}
           >
             {hasChange ? (
@@ -331,8 +329,8 @@ function TickerRow({
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all",
             isWatched
-              ? "bg-amber-400/15 text-amber-300 hover:bg-amber-400/25"
-              : "text-white/30 hover:bg-white/[0.06] hover:text-white/70",
+              ? "bg-amber-400/20 text-amber-500 hover:bg-amber-400/30 dark:bg-amber-400/15 dark:text-amber-300 dark:hover:bg-amber-400/25"
+              : "text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-white/30 dark:hover:bg-white/[0.06] dark:hover:text-white/70",
           )}
         >
           <Star className={cn("h-3.5 w-3.5", isWatched && "fill-current")} />
@@ -363,8 +361,8 @@ function HomeTabs({
               className={cn(
                 "group flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold transition-all",
                 isActive
-                  ? "bg-white text-slate-950"
-                  : "bg-white/[0.06] text-white/70 hover:bg-white/[0.1] hover:text-white",
+                  ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950 dark:bg-white/[0.06] dark:text-white/70 dark:hover:bg-white/[0.1] dark:hover:text-white",
               )}
             >
               <span>{tab.label}</span>
@@ -372,8 +370,8 @@ function HomeTabs({
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums",
                   isActive
-                    ? "bg-slate-950/10 text-slate-950/80"
-                    : "bg-white/[0.08] text-white/55",
+                    ? "bg-white/15 text-white/85 dark:bg-slate-950/10 dark:text-slate-950/80"
+                    : "bg-slate-200 text-slate-500 dark:bg-white/[0.08] dark:text-white/55",
                 )}
               >
                 {counts[tab.key]}
@@ -385,14 +383,14 @@ function HomeTabs({
       <Link
         href="/explore"
         aria-label="Discover creators"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 transition-colors hover:bg-white/[0.1] hover:text-white"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white/[0.1] dark:hover:text-white"
       >
         <Plus className="h-4 w-4" />
       </Link>
       <button
         aria-label="Edit"
         disabled
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/30"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/30"
       >
         <Pencil className="h-3.5 w-3.5" />
       </button>
@@ -411,16 +409,16 @@ function EmptyState({
 }) {
   return (
     <div className="px-5 py-12 text-center sm:px-7">
-      <p className="text-[15px] font-black tracking-[-0.01em] text-white">
+      <p className="text-[15px] font-black tracking-[-0.01em] text-slate-950 dark:text-white">
         {title}
       </p>
-      <p className="mx-auto mt-2 max-w-xs text-[13px] text-white/45">
+      <p className="mx-auto mt-2 max-w-xs text-[13px] text-slate-500 dark:text-white/45">
         {description}
       </p>
       {cta ? (
         <Link
           href={cta.href}
-          className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[13px] font-bold text-slate-950 transition-colors hover:bg-white/90"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-white/90"
         >
           {cta.label}
           <ArrowUpRight className="h-3.5 w-3.5" />
@@ -457,7 +455,9 @@ export default function HomePage() {
 
   const ownedCreatorIds = useMemo(
     () =>
-      new Set((portfolio?.holdings ?? []).map((h) => h.creatorId).filter(Boolean)),
+      new Set(
+        (portfolio?.holdings ?? []).map((h) => h.creatorId).filter(Boolean),
+      ),
     [portfolio?.holdings],
   );
 
@@ -503,7 +503,7 @@ export default function HomePage() {
         : grouped.watched;
 
   return (
-    <div className="-mx-5 -my-6 min-h-[calc(100vh-3.5rem)] bg-[#0a0b0f] text-white sm:-mx-7 lg:-mx-8 lg:-my-6 lg:min-h-screen">
+    <div className="-mx-5 -my-6 min-h-[calc(100vh-3.5rem)] bg-white text-slate-950 dark:bg-[#0a0b0f] dark:text-white sm:-mx-7 lg:-mx-8 lg:-my-6 lg:min-h-screen">
       <BalanceHeader
         totalValue={totalValue}
         cash={cash}
@@ -514,7 +514,7 @@ export default function HomePage() {
         change24hPct={change24hPct}
       />
 
-      <div className="border-t border-white/[0.06]">
+      <div className="border-t border-slate-200 dark:border-white/[0.06]">
         <HomeTabs active={tab} onChange={setTab} counts={counts} />
 
         {visible.length === 0 ? (
@@ -543,7 +543,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="divide-y divide-white/[0.04] pb-12"
+            className="divide-y divide-slate-200/70 pb-12 dark:divide-white/[0.04]"
           >
             {visible.map((item) => {
               const creatorId = item.creator?.creatorId ?? "";
